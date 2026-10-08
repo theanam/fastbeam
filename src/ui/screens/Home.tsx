@@ -1,173 +1,54 @@
-import { useEffect, useState } from 'preact/hooks'
-import { SHARED_NETWORK_PEERS, STILL_LOOKING_MS } from '../../config'
-import { device } from '../../state/identity'
-import { visiblePeers, type Peer } from '../../state/peers'
-import {
-  addPendingFiles,
-  clearPending,
-  dragging,
-  openPairSheet,
-  openPeerSheet,
-  openSendSheet,
-  pendingFiles,
-  pendingText,
-} from '../../state/ui'
-import { Button, IconButton } from '../components/Controls'
-import { EditableName } from '../components/EditableName'
+import { visiblePeers } from '../../state/peers'
+import { dragging } from '../../state/ui'
+import { AppFrame } from '../components/AppFrame'
+import { useIsDesktop } from '../useIsDesktop'
 import { Header } from '../components/Header'
-import { CloseIcon, CodeIcon, DeviceIcon, ScanIcon } from '../components/Icons'
 import { PairPanel } from '../components/PairPanel'
-import { Tile } from '../components/Tile'
-
-function useIsDesktop(): boolean {
-  const [wide, setWide] = useState(() => window.matchMedia('(min-width: 900px)').matches)
-  useEffect(() => {
-    const mq = window.matchMedia('(min-width: 900px)')
-    const on = () => setWide(mq.matches)
-    mq.addEventListener('change', on)
-    return () => mq.removeEventListener('change', on)
-  }, [])
-  return wide
-}
-
-/** Screen 1. */
-function Looking() {
-  const [stillLooking, setStillLooking] = useState(false)
-  useEffect(() => {
-    const t = window.setTimeout(() => setStillLooking(true), STILL_LOOKING_MS)
-    return () => window.clearTimeout(t)
-  }, [])
-
-  return (
-    <main class="home-main">
-      <div class="pulse" aria-hidden="true">
-        <div class="pulse-ring" />
-        <div class="pulse-ring" />
-        <div class="pulse-ring" />
-        <div class="pulse-core" />
-        <div class="pulse-self">
-          <DeviceIcon type={device.deviceType} size={36} />
-        </div>
-      </div>
-      <div class="home-identity">
-        <div class="eyebrow">You're visible as</div>
-        <EditableName />
-        <p class="home-hint" aria-live="polite">
-          {stillLooking ? (
-            <>Still looking. Different Wi‑Fi? Use a code.</>
-          ) : (
-            <>
-              Looking for devices on this Wi‑Fi. Open <strong>fastbeam.app</strong> on the other one.
-            </>
-          )}
-        </p>
-      </div>
-    </main>
-  )
-}
-
-function PendingBanner() {
-  const files = pendingFiles.value
-  const text = pendingText.value
-  if (!files.length && !text) return null
-  const what = files.length ? `${files.length} ${files.length === 1 ? 'file' : 'files'}` : 'Text'
-  return (
-    <div class="pending" role="status">
-      <span>
-        <strong>{what} ready.</strong> Tap a device to send {files.length ? 'them' : 'it'}.
-      </span>
-      <IconButton label="Clear" onClick={clearPending}>
-        <CloseIcon size={18} />
-      </IconButton>
-    </div>
-  )
-}
-
-/** Screen 2. */
-function Nearby({ peers, desktop }: { peers: Peer[]; desktop: boolean }) {
-  const [showAll, setShowAll] = useState(false)
-  const crowded = peers.length > SHARED_NETWORK_PEERS
-  const shown = crowded && !showAll ? peers.slice(0, 6) : peers
-  const select = (p: Peer) => openSendSheet(p.deviceId)
-  const drop = (p: Peer, files: File[]) => {
-    addPendingFiles(files)
-    openSendSheet(p.deviceId)
-  }
-  return (
-    <main class="home-main home-main--grid">
-      <section class="home-identity home-identity--left">
-        <div class="eyebrow">You're visible as</div>
-        <EditableName />
-      </section>
-      <PendingBanner />
-      <div class="grid-head">
-        <div class="eyebrow-caps live">
-          <span class="dot-live" aria-hidden="true" />
-          {desktop ? 'Drop files on a device, or click one' : 'Tap a device to send'}
-        </div>
-        <div class="row-sub">{peers.length} found</div>
-      </div>
-      {crowded && (
-        <div class="alert alert--warn" role="note">
-          You may be on a shared network. Only accept from devices you recognise.
-        </div>
-      )}
-      <div class="tiles">
-        {shown.map((p) => (
-          <Tile key={p.deviceId} peer={p} onSelect={select} onInfo={(x) => openPeerSheet(x.deviceId)} onDrop={drop} />
-        ))}
-      </div>
-      {crowded && !showAll && (
-        <Button variant="link" onClick={() => setShowAll(true)}>
-          Show all {peers.length}
-        </Button>
-      )}
-      {desktop && (
-        <div class="row-sub">
-          Tip: press <kbd class="kbd">{navigator.platform.includes('Mac') ? '⌘ V' : 'Ctrl V'}</kbd> anywhere to send what&rsquo;s on
-          your clipboard.
-        </div>
-      )}
-    </main>
-  )
-}
-
-/** Mobile bottom bar: both pairing entry points whenever "Not on the same Wi‑Fi?" is visible. */
-function PairEntry() {
-  return (
-    <aside class="pair-entry" aria-label="Pair with a code">
-      <div class="pair-entry-title">Not on the same Wi‑Fi?</div>
-      <div class="pair-entry-actions">
-        <Button variant="secondary" onClick={() => openPairSheet('show')}>
-          <CodeIcon />
-          Show my code
-        </Button>
-        <Button variant="primary" onClick={() => openPairSheet('scan')}>
-          <ScanIcon />
-          Scan or enter
-        </Button>
-      </div>
-    </aside>
-  )
-}
+import { Identity } from './home/Identity'
+import { Looking } from './home/Looking'
+import { Nearby } from './home/Nearby'
+import { PairEntry } from './home/PairEntry'
+import { PendingBanner } from './home/PendingBanner'
+import { PrivacyNote } from './home/PrivacyNote'
 
 export function Home() {
   const peers = visiblePeers.value
   const desktop = useIsDesktop()
   return (
-    <div class={`shell${dragging.value ? ' shell--dragging' : ''}`}>
-      <Header />
-      <div class="home">
-        {peers.length === 0 ? (
+    <AppFrame
+      desktop={desktop}
+      dragging={dragging.value}
+      aside={
+        desktop ? (
           <>
-            <Looking />
-            <PendingBanner />
+            <PairPanel />
+            <PrivacyNote />
           </>
-        ) : (
-          <Nearby peers={peers} desktop={desktop} />
-        )}
-        {desktop ? <PairPanel /> : <PairEntry />}
+        ) : undefined
+      }
+    >
+      {!desktop && <Header />}
+      <div class="flex min-h-0 flex-1 flex-col">
+        {/* Sections settle in once, top to bottom, so the eye lands on "you" first. */}
+        <main
+          class={
+            'flex flex-1 flex-col gap-4 px-4 pt-1 pb-6 desk:gap-[22px] desk:px-10 desk:pt-9 desk:pb-10 wide:px-12 wide:pt-10 wide:pb-12 ' +
+            'motion-safe:*:animate-rise motion-safe:[&>:nth-child(2)]:[animation-delay:50ms] ' +
+            'motion-safe:[&>:nth-child(3)]:[animation-delay:100ms] motion-safe:[&>:nth-child(4)]:[animation-delay:150ms]'
+          }
+        >
+          {desktop && (
+            <header class="flex flex-col gap-1.5">
+              <h1 class="m-0 font-display text-30 leading-[1.1] font-bold tracking-display text-balance text-ink desk:text-34">Send files to a nearby device</h1>
+              <p class="text-15 text-muted">Devices on this Wi‑Fi with fastbeam open show up below.</p>
+            </header>
+          )}
+          <Identity />
+          <PendingBanner />
+          {peers.length === 0 ? <Looking /> : <Nearby peers={peers} desktop={desktop} />}
+        </main>
+        {!desktop && <PairEntry />}
       </div>
-    </div>
+    </AppFrame>
   )
 }

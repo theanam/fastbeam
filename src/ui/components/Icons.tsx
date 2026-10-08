@@ -21,8 +21,11 @@ export function Mark({ size = 32, class: cls, spark = true }: IconProps & { spar
 
 export function Wordmark({ class: cls }: { class?: string }) {
   return (
-    <span class={cls ? `wordmark ${cls}` : 'wordmark'} aria-label="fastbeam">
-      fast<b>beam</b>
+    <span
+      class={`font-display text-22 leading-none font-extrabold tracking-display whitespace-nowrap desk:text-24${cls ? ` ${cls}` : ''}`}
+      aria-label="fastbeam"
+    >
+      fast<b class="font-[inherit] text-wordmark">beam</b>
     </span>
   )
 }
@@ -254,6 +257,13 @@ export const InfoIcon = (p: IconProps) => (
     <path d="M12 11v5M12 8h.01" />
   </Stroke>
 )
+export const WifiIcon = (p: IconProps) => (
+  <Stroke {...p}>
+    <path d="M2.5 9a14 14 0 0 1 19 0M5.5 12.5a9.5 9.5 0 0 1 13 0M8.6 15.9a5 5 0 0 1 6.8 0" />
+    <circle cx="12" cy="19.3" r="0.9" fill="currentColor" />
+  </Stroke>
+)
+
 export const ShuffleIcon = (p: IconProps) => (
   <Stroke size={18} {...p}>
     <path d="M16 3h5v5M4 20L21 3M21 16v5h-5M15 15l6 6M4 4l5 5" />

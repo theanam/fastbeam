@@ -10,7 +10,7 @@ const L = logger('boot')
 import { addPendingFiles, dragging, hasPending, pendingText } from './state/ui'
 import { initTransferGuards } from './transfer/manager'
 import { cleanupOpfs, probeOpfs } from './transfer/sinks'
-import { onPairedDefault } from './ui/sheets/PairSheet'
+import { onPairedDefault } from './ui/sheets/pairActions'
 
 /** Anything uncaught lands in the status console so users can copy it for a bug report. */
 function initErrorCapture(): void {

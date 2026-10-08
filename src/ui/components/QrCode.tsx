@@ -15,10 +15,15 @@ export function QrCode({ value, size = 196 }: { value: string; size?: number }) 
     }
   }, [value])
   return (
-    <div class="qr" style={{ width: size, height: size }} role="img" aria-label="QR code for the fastbeam pairing link">
+    <div
+      class="relative box-content rounded-xl bg-white p-2.5"
+      style={{ width: size, height: size }}
+      role="img"
+      aria-label="QR code for the fastbeam pairing link"
+    >
       {/* The SVG is generated locally from our own URL, never from remote content. */}
-      <div class="qr-svg" dangerouslySetInnerHTML={{ __html: svg }} />
-      <div class="qr-mark">
+      <div class="size-full [&_svg]:block [&_svg]:size-full" dangerouslySetInnerHTML={{ __html: svg }} />
+      <div class="absolute top-1/2 left-1/2 flex size-10 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-[10px] bg-white">
         <Mark size={32} spark={false} />
       </div>
     </div>

@@ -1,10 +1,20 @@
 import { useEffect, useRef, useState } from 'preact/hooks'
 import { closeViewer, viewer, type ViewerItem } from '../../state/media'
 import { formatBytes } from '../../transfer/protocol'
-import { IconButton } from './Controls'
+import { cx } from '../classes'
+import { IconButton } from './IconButton'
 import { BackIcon, CloseIcon, DownloadIcon, ShareIcon } from './Icons'
+import { Thumb } from './Thumb'
 
 type Loaded = { url: string; blob: Blob } | { error: string }
+
+/** Light icon buttons over the dark stage. */
+const lightBtn = 'text-[#e4efee] hover:before:bg-[rgba(228,239,238,0.12)]!'
+const note = 'max-w-[320px] p-6 text-center text-15 text-[#93a9a8]'
+const media = 'block h-auto w-auto bg-[#000] object-contain'
+const nav =
+  'absolute top-1/2 inline-flex size-12 -translate-y-1/2 items-center justify-center rounded-full ' +
+  'bg-[rgba(228,239,238,0.12)] text-[#e4efee] [@media(hover:none)]:hidden'
 
 /** Full-screen gallery for photos and videos: swipe or arrow keys, thumbnails, save and share. */
 export function MediaViewer() {
@@ -110,7 +120,11 @@ export function MediaViewer() {
   return (
     <dialog
       ref={dlg}
-      class="viewer"
+      class={cx(
+        'm-0 hidden h-dvh max-h-none w-screen max-w-none flex-col overflow-hidden open:flex',
+        'bg-[#060d0e] text-[#e4efee] pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)]',
+        'backdrop:bg-[#060d0e]',
+      )}
       aria-label={`Viewing ${item.name}, ${index + 1} of ${count}`}
       onCancel={(e) => {
         e.preventDefault()
@@ -122,41 +136,49 @@ export function MediaViewer() {
         else if (e.key === 'ArrowLeft') go(-1)
       }}
     >
-      <header class="viewer-head">
-        <IconButton label="Close viewer" class="viewer-btn" onClick={closeViewer}>
+      <header class="flex flex-none items-center gap-2 px-2 py-1.5">
+        <IconButton label="Close viewer" tone="inherit" class={lightBtn} onClick={closeViewer}>
           <CloseIcon />
         </IconButton>
-        <div class="viewer-title">
-          <div class="viewer-name">{item.name}</div>
-          <div class="viewer-sub">
+        <div class="flex min-w-0 flex-1 flex-col">
+          <div class="truncate text-15 font-semibold">{item.name}</div>
+          <div class="text-13 text-[#93a9a8]">
             {count > 1 ? `${index + 1} of ${count} · ` : ''}
             {formatBytes(item.size)}
           </div>
         </div>
-        <div class="viewer-actions">
+        <div class="flex gap-0.5">
           {canShare() && (
-            <IconButton label="Share" class="viewer-btn" onClick={() => void share()}>
+            <IconButton label="Share" tone="inherit" class={lightBtn} onClick={() => void share()}>
               <ShareIcon size={20} />
             </IconButton>
           )}
-          <IconButton label="Save" class="viewer-btn" disabled={!loaded || !('url' in loaded)} onClick={save}>
+          <IconButton label="Save" tone="inherit" class={lightBtn} disabled={!loaded || !('url' in loaded)} onClick={save}>
             <DownloadIcon size={22} />
           </IconButton>
         </div>
       </header>
 
       <div
-        class={`viewer-stage${zoom ? ' viewer-stage--zoom' : ''}`}
+        class={cx(
+          'relative min-h-0 flex-1 select-none',
+          zoom
+            ? 'block touch-auto overflow-auto'
+            : 'flex touch-pan-y touch-pinch-zoom items-center justify-center overflow-hidden',
+        )}
         onPointerDown={onPointerDown}
         onPointerUp={onPointerUp}
         onPointerCancel={() => (swipe.current = null)}
       >
-        {!loaded && <div class="viewer-note">Loading…</div>}
-        {loaded && 'error' in loaded && <div class="viewer-note">{loaded.error}</div>}
+        {!loaded && <div class={note}>Loading…</div>}
+        {loaded && 'error' in loaded && <div class={note}>{loaded.error}</div>}
         {loaded && 'url' in loaded && item.kind === 'image' && (
           <img
             key={loaded.url}
-            class="viewer-media"
+            class={cx(
+              media,
+              zoom ? 'mx-auto max-h-none max-w-none cursor-zoom-out' : 'max-h-full max-w-full cursor-zoom-in',
+            )}
             src={loaded.url}
             alt={item.name}
             draggable={false}
@@ -170,7 +192,7 @@ export function MediaViewer() {
         {loaded && 'url' in loaded && item.kind === 'video' && (
           <video
             key={loaded.url}
-            class="viewer-media"
+            class={cx(media, 'max-h-full max-w-full')}
             src={loaded.url}
             controls
             playsInline
@@ -183,10 +205,10 @@ export function MediaViewer() {
         )}
         {count > 1 && (
           <>
-            <button type="button" class="viewer-nav viewer-nav--prev" aria-label="Previous" onClick={() => go(-1)}>
+            <button type="button" class={cx(nav, 'left-3')} aria-label="Previous" onClick={() => go(-1)}>
               <BackIcon />
             </button>
-            <button type="button" class="viewer-nav viewer-nav--next" aria-label="Next" onClick={() => go(1)}>
+            <button type="button" class={cx(nav, 'right-3 rotate-180')} aria-label="Next" onClick={() => go(1)}>
               <BackIcon />
             </button>
           </>
@@ -194,7 +216,11 @@ export function MediaViewer() {
       </div>
 
       {count > 1 && (
-        <div class="viewer-strip" role="tablist" aria-label="All media">
+        <div
+          class="flex flex-none gap-1.5 overflow-x-auto px-3 py-2.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+          role="tablist"
+          aria-label="All media"
+        >
           {items.map((it, i) => (
             <button
               key={`${it.name}:${i}`}
@@ -202,7 +228,10 @@ export function MediaViewer() {
               role="tab"
               aria-selected={i === index}
               aria-label={`${it.name}, ${i + 1} of ${count}`}
-              class={`viewer-thumb${i === index ? ' is-current' : ''}`}
+              class={cx(
+                'flex-none rounded-[10px] border-2 leading-[0]',
+                i === index ? 'border-[#4dd0cc] opacity-100' : 'border-transparent opacity-60',
+              )}
               onClick={() => {
                 setZoom(false)
                 setIndex(i)
@@ -215,30 +244,4 @@ export function MediaViewer() {
       )}
     </dialog>
   )
-}
-
-/** Small lazy thumbnail for a media item; used in the gallery strip, the Done list and the Send sheet. */
-export function Thumb({ item, size = 48 }: { item: ViewerItem; size?: number }) {
-  const [url, setUrl] = useState<string | null>(null)
-  const [failed, setFailed] = useState(false)
-  useEffect(() => {
-    let alive = true
-    let u: string | null = null
-    item
-      .blob()
-      .then((b) => {
-        if (!alive) return
-        u = URL.createObjectURL(b)
-        setUrl(u)
-      })
-      .catch(() => alive && setFailed(true))
-    return () => {
-      alive = false
-      if (u) URL.revokeObjectURL(u)
-    }
-  }, [item])
-  const style = { width: size, height: size }
-  if (!url || failed) return <span class="thumb thumb--empty" style={style} aria-hidden="true" />
-  if (item.kind === 'video') return <video class="thumb" style={style} src={url} muted playsInline preload="metadata" aria-hidden="true" />
-  return <img class="thumb" style={style} src={url} alt="" loading="lazy" onError={() => setFailed(true)} />
 }

@@ -87,14 +87,33 @@ export function BrowserIcon({ browser, size = 14 }: { browser: string; size?: nu
   return <GlobeIcon size={size} />
 }
 
-/** Avatar with the platform mark and a browser badge in the corner. */
-export function DeviceAvatar({ peer, size = 48 }: { peer: Pick<Peer, 'os' | 'platform' | 'deviceType' | 'browser'>; size?: number }) {
+/**
+ * Avatar with the platform mark and a browser badge in the corner. `class` replaces the default round
+ * tint (shape and colours), e.g. the rounded-square tile avatar that fills on hover.
+ */
+export function DeviceAvatar({
+  peer,
+  size = 48,
+  class: cls = 'rounded-full bg-tint text-link',
+}: {
+  peer: Pick<Peer, 'os' | 'platform' | 'deviceType' | 'browser'>
+  size?: number
+  class?: string
+}) {
   const os = peerOs(peer)
   const badge = Math.round(size * 0.44)
   return (
-    <span class="avatar device-avatar" style={{ width: size, height: size }} aria-hidden="true">
+    <span
+      class={`relative inline-flex flex-none items-center justify-center overflow-visible ${cls}`}
+      style={{ width: size, height: size }}
+      aria-hidden="true"
+    >
       <PlatformIcon os={os} deviceType={peer.deviceType} size={Math.round(size * 0.5)} />
-      <span class="device-badge" style={{ width: badge, height: badge }} title={peer.browser}>
+      <span
+        class="absolute -right-1 -bottom-1 inline-flex items-center justify-center rounded-full border-[1.5px] border-line bg-surface text-muted"
+        style={{ width: badge, height: badge }}
+        title={peer.browser}
+      >
         <BrowserIcon browser={peer.browser} size={Math.round(badge * 0.68)} />
       </span>
     </span>

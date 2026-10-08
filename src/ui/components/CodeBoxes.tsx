@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'preact/hooks'
 import { CODE_LENGTH } from '../../config'
 import { codeFromText, isCodeChar, normalizeCodeInput } from '../../net/pairing'
+import { cx } from '../classes'
 
 /**
  * Six boxes backed by one real input so paste, autofill and screen readers all work.
@@ -57,20 +58,30 @@ export function CodeBoxes({
   const active = Math.min(value.length, CODE_LENGTH - 1)
 
   return (
-    <div class="codeboxes-wrap">
-      <div class={`codeboxes${shake ? ' codeboxes--shake' : ''}`} onClick={() => input.current?.focus()}>
+    <div class="flex flex-none flex-col gap-2.5">
+      <div
+        class={cx('relative grid grid-cols-6 gap-2', shake && 'motion-safe:animate-[fb-shake_0.4s_ease]')}
+        onClick={() => input.current?.focus()}
+      >
         {Array.from({ length: CODE_LENGTH }, (_, i) => {
           const ch = value[i] ?? ''
           const isActive = focused && i === active && value.length < CODE_LENGTH
           return (
-            <div key={i} class={`codebox${isActive ? ' codebox--active' : ''}${ch ? ' codebox--filled' : ''}`} aria-hidden="true">
-              {ch || (isActive ? <span class="codebox-caret" /> : null)}
+            <div
+              key={i}
+              class={cx(
+                'flex h-15 items-center justify-center rounded-btn bg-surface font-mono text-26 font-bold text-ink',
+                isActive ? 'border-2 border-accent' : 'border-[1.5px] border-line',
+              )}
+              aria-hidden="true"
+            >
+              {ch || (isActive ? <span class="h-7 w-0.5 bg-button motion-safe:animate-[fb-caret_1s_steps(1)_infinite]" /> : null)}
             </div>
           )
         })}
         <input
           ref={input}
-          class="codeboxes-input"
+          class="absolute inset-0 size-full cursor-text border-0 text-16 opacity-0"
           type="text"
           inputMode="text"
           autocapitalize="characters"
@@ -89,7 +100,11 @@ export function CodeBoxes({
           }}
         />
       </div>
-      <div id="codeboxes-help" class={`codeboxes-help${error ? ' codeboxes-help--error' : ''}`} role={error ? 'alert' : undefined}>
+      <div
+        id="codeboxes-help"
+        class={cx('min-h-5 text-center text-14', error ? 'font-semibold text-warn-ink' : 'text-muted')}
+        role={error ? 'alert' : undefined}
+      >
         {error ?? 'Connects as soon as all 6 are in. Case doesn’t matter.'}
       </div>
     </div>

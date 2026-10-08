@@ -1,5 +1,6 @@
 import type { ComponentChildren } from 'preact'
 import { useEffect, useRef, useState } from 'preact/hooks'
+import { cx } from '../classes'
 
 /**
  * Bottom sheet (85% height, drag handle, backdrop tap and Esc dismiss). On wide screens it renders as a
@@ -58,66 +59,35 @@ export function Sheet({
   }
 
   return (
-    <div class="sheet-backdrop" onClick={(e) => e.target === e.currentTarget && onClose()}>
+    <div
+      class="fixed inset-0 z-30 flex items-end justify-center bg-[rgba(10,20,21,0.48)] desk:items-center desk:p-6"
+      onClick={(e) => e.target === e.currentTarget && onClose()}>
       <section
         ref={ref}
         role="dialog"
         aria-modal="true"
         aria-label={label}
-        class={`sheet${tall ? ' sheet--tall' : ''}`}
+        class={cx(
+          'flex max-h-[92dvh] w-full flex-col gap-4 overflow-hidden rounded-t-sheet bg-surface px-5 text-ink',
+          'pb-[calc(20px+env(safe-area-inset-bottom))] shadow-[0_-8px_32px_rgba(0,0,0,0.18)]',
+          'transition-transform duration-160 ease-[ease] motion-safe:animate-[fb-sheet-in_220ms_ease-out]',
+          'desk:max-h-[calc(100dvh-48px)] desk:max-w-[480px] desk:rounded-sheet desk:pb-5',
+          tall && 'h-[85dvh] desk:h-auto desk:min-h-[min(680px,calc(100dvh-48px))]',
+        )}
         style={dragY ? { transform: `translateY(${dragY}px)`, transition: 'none' } : undefined}
       >
         <div
-          class="sheet-handle"
+          class="flex flex-none cursor-grab touch-none justify-center pt-2.5 pb-0.5"
           aria-hidden="true"
           onPointerDown={onPointerDown}
           onPointerMove={onPointerMove}
           onPointerUp={onPointerUp}
           onPointerCancel={onPointerUp}
         >
-          <span />
+          <span class="h-[5px] w-10 rounded-[3px] bg-line" />
         </div>
         {children}
       </section>
-    </div>
-  )
-}
-
-export function Tabs<T extends string>({
-  tabs,
-  value,
-  onChange,
-  label,
-  tone = 'ground',
-}: {
-  tabs: readonly { value: T; label: string }[]
-  value: T
-  onChange: (v: T) => void
-  label: string
-  tone?: 'ground' | 'chip'
-}) {
-  return (
-    <div role="tablist" aria-label={label} class={`tabs tabs--${tone}`}>
-      {tabs.map((t) => (
-        <button
-          key={t.value}
-          type="button"
-          role="tab"
-          aria-selected={t.value === value}
-          tabIndex={t.value === value ? 0 : -1}
-          onClick={() => onChange(t.value)}
-          onKeyDown={(e) => {
-            if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') {
-              e.preventDefault()
-              const i = tabs.findIndex((x) => x.value === value)
-              const next = tabs[(i + (e.key === 'ArrowRight' ? 1 : tabs.length - 1)) % tabs.length]
-              if (next) onChange(next.value)
-            }
-          }}
-        >
-          {t.label}
-        </button>
-      ))}
     </div>
   )
 }
