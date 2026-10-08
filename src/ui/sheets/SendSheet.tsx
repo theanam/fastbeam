@@ -24,10 +24,15 @@ function fileIcon(f: File) {
   return <FileIcon />
 }
 
+/** Identity of a picked file. Includes the folder path: IMG.jpg in two subfolders is two files. */
+function fileKey(f: File): string {
+  return `${f.webkitRelativePath || f.name}:${f.size}:${f.lastModified}`
+}
+
 function dedupe(files: File[]): File[] {
   const seen = new Set<string>()
   return files.filter((f) => {
-    const k = `${f.name}:${f.size}:${f.lastModified}`
+    const k = fileKey(f)
     if (seen.has(k)) return false
     seen.add(k)
     return true
@@ -139,8 +144,8 @@ export function SendSheet({ peerId, tab: initialTab }: { peerId: string; tab: Se
               type="file"
               multiple
               hidden
-              // @ts-expect-error non-standard but widely supported
-              webkitdirectory=""
+              // @ts-expect-error non-standard but widely supported. Must be true: Preact sets the property, and "" is false.
+              webkitdirectory
               onChange={(e) => addFiles(e.currentTarget.files)}
             />
           </div>
@@ -152,7 +157,7 @@ export function SendSheet({ peerId, tab: initialTab }: { peerId: string; tab: Se
             ) : (
               <ul class="selected-list">
                 {files.map((f, i) => (
-                  <li key={`${f.name}:${f.size}:${f.lastModified}`} class="selected-item">
+                  <li key={fileKey(f)} class="selected-item">
                     {mediaKind(f.type, f.name) ? (
                       <button
                         type="button"
