@@ -3,11 +3,12 @@
 :root {
   color-scheme: light;
 
-  --ground: #f3f7f7;
+  --ground: #eef3f5;
+  --sunken: #f5f8f9;
   --surface: #ffffff;
-  --line: #d9e4e3;
-  --line-soft: #eaf0ef;
-  --muted: #4f6264;
+  --line: #dde6e8;
+  --line-soft: #ebf1f2;
+  --muted: #536568;
   --body: #2d3d3f;
   --ink: #0f1c1e;
 
@@ -16,24 +17,30 @@
   --on-button: #ffffff;
   --link: #0a6e70;
   --link-hover: #06494a;
-  --tint: #ddf2f1;
+  --tint: #dff3f2;
   --wordmark: #0b7f80;
 
-  --chip: #e7eeee;
+  --chip: #e9f0f1;
   --chip-dot: #8fa3a3;
   --warn-bg: #fff1d6;
   --warn-ink: #7a4900;
 
-  --shadow-soft: 0 8px 24px rgba(15, 28, 30, 0.08);
-  --shadow-raised: 0 1px 3px rgba(15, 28, 30, 0.12);
+  /* Shadows are tinted toward the ink hue, never pure black on light. */
+  --shadow-soft: 0 12px 32px -12px rgba(15, 52, 56, 0.18), 0 2px 6px rgba(15, 52, 56, 0.04);
+  --shadow-raised: 0 1px 2px rgba(15, 52, 56, 0.08), 0 1px 3px rgba(15, 52, 56, 0.06);
+  --shadow-frame: 0 30px 80px -40px rgba(15, 52, 56, 0.28), 0 1px 0 rgba(15, 52, 56, 0.04);
   --toast-bg: #0f1c1e;
   --toast-ink: #e4efee;
 
+  /* One radius scale: 28 frame/sheet, 20 cards, 14 controls, pill for chips. */
+  --r-frame: 28px;
   --r-sheet: 28px;
   --r-tile: 20px;
-  --r-tile-lg: 22px;
+  --r-tile-lg: 20px;
   --r-btn: 14px;
-  --r-btn-lg: 16px;
+  --r-btn-lg: 14px;
+
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
 
   --font-ui: 'Figtree', 'Segoe UI', system-ui, sans-serif;
   --font-display: 'Bricolage Grotesque', 'Segoe UI', system-ui, sans-serif;
@@ -45,7 +52,8 @@
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme='light']) {
     color-scheme: dark;
-    --ground: #0a1415;
+    --ground: #081112;
+    --sunken: #0d1a1c;
     --surface: #122023;
     --line: #24393b;
     --line-soft: #1b2f31;
@@ -63,8 +71,9 @@
     --chip-dot: #6f8786;
     --warn-bg: #3a2a05;
     --warn-ink: #ffd58a;
-    --shadow-soft: 0 8px 24px rgba(0, 0, 0, 0.35);
+    --shadow-soft: 0 12px 32px -12px rgba(0, 0, 0, 0.6);
     --shadow-raised: 0 1px 3px rgba(0, 0, 0, 0.4);
+    --shadow-frame: 0 30px 80px -40px rgba(0, 0, 0, 0.7);
     --toast-bg: #e4efee;
     --toast-ink: #0f1c1e;
   }
@@ -72,7 +81,8 @@
 
 :root[data-theme='dark'] {
   color-scheme: dark;
-  --ground: #0a1415;
+  --ground: #081112;
+  --sunken: #0d1a1c;
   --surface: #122023;
   --line: #24393b;
   --line-soft: #1b2f31;
@@ -90,8 +100,9 @@
   --chip-dot: #6f8786;
   --warn-bg: #3a2a05;
   --warn-ink: #ffd58a;
-  --shadow-soft: 0 8px 24px rgba(0, 0, 0, 0.35);
+  --shadow-soft: 0 12px 32px -12px rgba(0, 0, 0, 0.6);
   --shadow-raised: 0 1px 3px rgba(0, 0, 0, 0.4);
+  --shadow-frame: 0 30px 80px -40px rgba(0, 0, 0, 0.7);
   --toast-bg: #e4efee;
   --toast-ink: #0f1c1e;
 }
