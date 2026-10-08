@@ -6,47 +6,21 @@ import { consoleOpen } from '../../state/log'
 import { NAT_DETAIL, nat } from '../../state/network'
 import { goBack } from '../../state/router'
 import { deviceName, discoverable, NAME_MAX, setDeviceName, shuffleName, theme, type Theme } from '../../state/settings'
-import { AppFrame, useIsDesktop } from '../components/AppFrame'
-import { Button, IconButton, Segmented, Switch } from '../components/Controls'
-import { NetworkBadge } from '../components/Header'
-import { BackIcon, BugIcon, CopyIcon, ExternalIcon, GithubIcon, MailIcon, TerminalIcon } from '../components/Icons'
-
-function ActionRow({ icon, title, sub, onClick }: { icon: preact.ComponentChildren; title: string; sub: string; onClick: () => void }) {
-  return (
-    <button type="button" class="row row--link row--button" onClick={onClick}>
-      <span class="row-icon">{icon}</span>
-      <span class="row-text">
-        <span class="row-title">{title}</span>
-        <span class="row-sub">{sub}</span>
-      </span>
-    </button>
-  )
-}
+import { AppFrame } from '../components/AppFrame'
+import { useIsDesktop } from '../useIsDesktop'
+import { Button } from '../components/Button'
+import { IconButton } from '../components/IconButton'
+import { Segmented } from '../components/Segmented'
+import { Switch } from '../components/Switch'
+import { NetworkBadge } from '../components/NetworkBadge'
+import { BackIcon, BugIcon, CopyIcon, GithubIcon, MailIcon, TerminalIcon } from '../components/Icons'
+import { ActionRow } from '../components/ActionRow'
+import { LinkRow } from '../components/LinkRow'
 
 function feedbackMailto(): string {
   const subject = encodeURIComponent('fastbeam feedback')
   const body = encodeURIComponent(`\n\n—\nfastbeam ${__APP_VERSION__} · ${device.platform} · ${device.browser}`)
   return `mailto:${FEEDBACK_EMAIL}?subject=${subject}&body=${body}`
-}
-
-function LinkRow({ href, icon, title, sub }: { href: string; icon: preact.ComponentChildren; title: string; sub: string }) {
-  const external = href.startsWith('http')
-  return (
-    <a
-      class="row row--link"
-      href={href}
-      {...(external ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
-    >
-      <span class="row-icon">{icon}</span>
-      <span class="row-text">
-        <span class="row-title">{title}</span>
-        <span class="row-sub">{sub}</span>
-      </span>
-      <span class="row-ext muted">
-        <ExternalIcon />
-      </span>
-    </a>
-  )
 }
 
 const THEMES: readonly { value: Theme; label: string }[] = [

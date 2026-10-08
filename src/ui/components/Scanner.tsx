@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'preact/hooks'
 import { codeFromText } from '../../net/pairing'
-import { IconButton } from './Controls'
+import { IconButton } from './IconButton'
 import { TorchIcon } from './Icons'
 
 interface DetectedBarcode {

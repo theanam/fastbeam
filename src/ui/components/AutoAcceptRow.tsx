@@ -1,7 +1,7 @@
 import { canOfferAutoAccept, isAutoAccept, setAutoAccept } from '../../state/autoAccept'
 import { getPeer } from '../../state/peers'
 import { chooseSinkKind } from '../../transfer/sinks'
-import { Switch } from './Controls'
+import { Switch } from './Switch'
 
 /**
  * "Auto-accept from X for this session". Shown only once a transfer from X was accepted by hand.

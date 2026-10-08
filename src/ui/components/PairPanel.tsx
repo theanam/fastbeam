@@ -1,9 +1,10 @@
 import { useState } from 'preact/hooks'
 import { codeFromText, host, isValidCode, joinWithCode, normalizeCodeInput } from '../../net/pairing'
 import { hasPending, openPairSheet } from '../../state/ui'
-import { Button, IconButton } from './Controls'
+import { Button } from './Button'
+import { IconButton } from './IconButton'
 import { CopyIcon, QrIcon } from './Icons'
-import { copyCode, copyLink, onPairedDefault, useHosting } from '../sheets/PairSheet'
+import { copyCode, copyLink, onPairedDefault, useHosting } from '../sheets/pairActions'
 
 /** Screen 13's side panel: the code is always on show on desktop; QR and password open the full sheet. */
 export function PairPanel() {

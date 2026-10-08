@@ -4,7 +4,7 @@ import { getPeer } from '../../state/peers'
 import { incomingOffer } from '../../transfer/manager'
 import { formatBytes } from '../../transfer/protocol'
 import { AutoAcceptRow } from './AutoAcceptRow'
-import { Button } from './Controls'
+import { Button } from './Button'
 import { DeviceAvatar } from './DeviceGlyph'
 import { DeviceIcon, LockIcon, ShieldIcon } from './Icons'
 

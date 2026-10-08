@@ -7,7 +7,7 @@ import { NAT_LABEL, nat } from '../../state/network'
 import { peers } from '../../state/peers'
 import { deviceName } from '../../state/settings'
 import { toast } from '../../state/toast'
-import { IconButton } from './Controls'
+import { IconButton } from './IconButton'
 import { CloseIcon } from './Icons'
 
 const LEVELS: LogLevel[] = ['debug', 'info', 'warn', 'error']

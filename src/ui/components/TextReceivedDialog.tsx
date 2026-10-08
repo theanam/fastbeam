@@ -3,7 +3,8 @@ import { getPeer } from '../../state/peers'
 import { toast } from '../../state/toast'
 import { openSendSheet, textReceived } from '../../state/ui'
 import { singleUrl } from '../../transfer/protocol'
-import { Button, IconButton } from './Controls'
+import { Button } from './Button'
+import { IconButton } from './IconButton'
 import { CloseIcon, CopyIcon, LinkIcon } from './Icons'
 
 export function TextReceivedDialog() {
