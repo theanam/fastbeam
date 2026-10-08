@@ -9,6 +9,18 @@ import { IconButton } from '../components/IconButton'
 import { CheckIcon, CloseIcon, ImageIcon } from '../components/Icons'
 import { Thumb } from '../components/Thumb'
 import { galleryFrom } from './transferView'
+import { cardList, cx, rowSub, rowText, screen, screenHead } from '../classes'
+
+/** File card; its View/Open/Save links get a 44px target with 14px padding and 15px text. */
+const doneItem = cx(
+  'flex min-h-15 items-center gap-3 rounded-2xl border border-line bg-surface pr-1.5 pl-4',
+  '[&>button:not(:first-child)]:px-3.5 [&>button:not(:first-child)]:text-15',
+)
+const doneCheck = cx(
+  'inline-flex size-30 items-center justify-center rounded-full bg-accent text-on-button',
+  'shadow-[0_0_0_14px_var(--color-tint)] motion-safe:animate-[fb-pop_0.5s_ease-out_both]',
+)
+const thumbBtn = 'group/thumb inline-flex flex-none rounded-[10px] leading-[0]'
 
 /** Screen 6, both directions. */
 export function Done() {
@@ -35,25 +47,25 @@ export function Done() {
   }
 
   return (
-    <div class="screen">
-      <header class="screen-head">
-        <span class="muted" style={{ fontWeight: 600, fontSize: 15 }}>
+    <div class={screen}>
+      <header class={screenHead}>
+        <span class="text-15 font-semibold text-muted">
           {isSend ? 'To ' : 'From '}
-          <span class="ink">{snap.peerName}</span>
+          <span class="text-ink">{snap.peerName}</span>
         </span>
-        <IconButton label="Close" class="iconbtn--round" onClick={close}>
+        <IconButton label="Close" round onClick={close}>
           <CloseIcon />
         </IconButton>
       </header>
-      <div class="done-hero">
-        <span class="done-check">
+      <div class="flex flex-col items-center gap-4.5 pt-6 text-center">
+        <span class={doneCheck}>
           <CheckIcon size={56} strokeWidth={2.4} />
         </span>
         <div>
-          <h1 class="done-title">
+          <h1 class="mb-1.5 font-display text-34 font-extrabold tracking-display wrap-anywhere">
             {isSend ? 'Sent' : 'Got'} {count === 1 ? snap.files[0]?.name ?? '1 file' : `${count} files`}
           </h1>
-          <div class="muted">
+          <div class="text-muted">
             {formatBytes(snap.totalSize)}
             {dur ? ` in ${dur}` : ''}
             {dest ? ` · ${dest}` : ''}
@@ -61,37 +73,37 @@ export function Done() {
         </div>
       </div>
       {galleryItems.length > 1 && (
-        <Button variant="secondary" class="btn--md" onClick={() => openViewer(galleryItems, 0)}>
+        <Button variant="secondary" size="md" onClick={() => openViewer(galleryItems, 0)}>
           <ImageIcon /> View all {galleryItems.length} {galleryItems.every((g) => g.kind === 'image') ? 'photos' : 'photos and videos'}
         </Button>
       )}
-      <div class="done-list">
+      <div class="flex flex-1 flex-col gap-2">
         {snap.files.map((f, idx) => {
           const sv = saved[idx]
           const media = gallery.get(idx)
           return (
-            <div key={f.fileId} class="done-item">
+            <div key={f.fileId} class={doneItem}>
               {media && (
-                <button type="button" class="thumb-btn" aria-label={`View ${f.name}`} onClick={() => viewAt(idx)}>
+                <button type="button" class={thumbBtn} aria-label={`View ${f.name}`} onClick={() => viewAt(idx)}>
                   <Thumb item={media} size={44} />
                 </button>
               )}
-              <span class="selected-text">
-                <span class="selected-name">{f.name}</span>
-                <span class="row-sub">{formatBytes(f.size)}</span>
+              <span class={rowText}>
+                <span class="truncate text-16 font-semibold">{f.name}</span>
+                <span class={rowSub}>{formatBytes(f.size)}</span>
               </span>
               {media && (
-                <Button variant="link" onClick={() => viewAt(idx)}>
+                <Button variant="link" size="md" onClick={() => viewAt(idx)}>
                   View
                 </Button>
               )}
               {!media && sv?.open && (
-                <Button variant="link" onClick={() => void sv.open?.()}>
+                <Button variant="link" size="md" onClick={() => void sv.open?.()}>
                   Open
                 </Button>
               )}
               {sv?.save && (
-                <Button variant="link" onClick={() => sv.save?.()}>
+                <Button variant="link" size="md" onClick={() => sv.save?.()}>
                   Save
                 </Button>
               )}
@@ -100,15 +112,15 @@ export function Done() {
         })}
       </div>
       {!isSend && (
-        <div class="card card--list">
+        <div class={cx(cardList, 'empty:hidden')}>
           <AutoAcceptRow peerId={snap.peerId} />
         </div>
       )}
-      <div class="two-up screen-cta">
-        <Button variant="secondary" class="btn--lg" disabled={!peer} onClick={again}>
+      <div class="mt-auto grid w-full grid-cols-2 gap-2.5">
+        <Button variant="secondary" size="lg" disabled={!peer} onClick={again}>
           {isSend ? 'Send more' : 'Send back'}
         </Button>
-        <Button variant="primary" class="btn--lg" onClick={close}>
+        <Button variant="primary" size="lg" onClick={close}>
           Done
         </Button>
       </div>

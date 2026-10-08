@@ -1,0 +1,352 @@
+@import 'tailwindcss';
+
+/*
+ * fastbeam design tokens (build-notes §2) as Tailwind theme variables.
+ * Light by default; dark comes from the system or <html data-theme>, by overriding the same variables,
+ * so utilities like bg-surface or text-ink switch with the theme on their own.
+ */
+@theme static {
+  --color-*: initial;
+  --color-white: #ffffff;
+  --color-ground: #eef3f5;
+  --color-sunken: #f5f8f9;
+  --color-surface: #ffffff;
+  --color-line: #dde6e8;
+  --color-line-soft: #ebf1f2;
+  --color-muted: #536568;
+  --color-body: #2d3d3f;
+  --color-ink: #0f1c1e;
+  --color-accent: #12a1a6;
+  --color-button: #0b7f80;
+  --color-on-button: #ffffff;
+  --color-link: #0a6e70;
+  --color-link-hover: #06494a;
+  --color-tint: #dff3f2;
+  --color-wordmark: #0b7f80;
+  --color-chip: #e9f0f1;
+  --color-chip-dot: #8fa3a3;
+  --color-warn-bg: #fff1d6;
+  --color-warn-ink: #7a4900;
+  --color-toast-bg: #0f1c1e;
+  --color-toast-ink: #e4efee;
+
+  /* Shadows are tinted toward the ink hue, never pure black on light. */
+  --shadow-soft: 0 12px 32px -12px rgba(15, 52, 56, 0.18), 0 2px 6px rgba(15, 52, 56, 0.04);
+  --shadow-raised: 0 1px 2px rgba(15, 52, 56, 0.08), 0 1px 3px rgba(15, 52, 56, 0.06);
+  --shadow-frame: 0 30px 80px -40px rgba(15, 52, 56, 0.28), 0 1px 0 rgba(15, 52, 56, 0.04);
+
+  /* One radius scale: 28 frame/sheet, 20 cards, 14 controls, pill for chips. */
+  --radius-frame: 28px;
+  --radius-sheet: 28px;
+  --radius-tile: 20px;
+  --radius-btn: 14px;
+
+  --font-ui: 'Figtree', 'Segoe UI', system-ui, sans-serif;
+  --font-display: 'Bricolage Grotesque', 'Segoe UI', system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+
+  /* Pixel-exact type scale with no bundled line-heights: text-13 is 13px and inherits leading. */
+  --text-*: initial;
+  --text-11: 11px;
+  --text-12: 12px;
+  --text-13: 13px;
+  --text-14: 14px;
+  --text-15: 15px;
+  --text-16: 16px;
+  --text-17: 17px;
+  --text-18: 18px;
+  --text-20: 20px;
+  --text-22: 22px;
+  --text-24: 24px;
+  --text-26: 26px;
+  --text-28: 28px;
+  --text-30: 30px;
+  --text-32: 32px;
+  --text-34: 34px;
+  --text-36: 36px;
+  --text-44: 44px;
+
+  --tracking-display: -0.03em;
+  --tracking-title: -0.02em;
+
+  --ease-fb: cubic-bezier(0.16, 1, 0.3, 1);
+
+  /* desk: the framed desktop workspace and side panels; wide: room for sidebar labels. */
+  --breakpoint-desk: 900px;
+  --breakpoint-wide: 1180px;
+
+  --animate-dot: fb-dot 1.6s ease-in-out infinite;
+  --animate-rise: fb-rise 420ms var(--ease-fb) both;
+  --animate-toast: toast-in 180ms ease-out;
+  --animate-spin: fb-spin 0.9s linear infinite;
+}
+
+@layer theme {
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme='light']) {
+      color-scheme: dark;
+      --color-ground: #081112;
+      --color-sunken: #0d1a1c;
+      --color-surface: #122023;
+      --color-line: #24393b;
+      --color-line-soft: #1b2f31;
+      --color-muted: #93a9a8;
+      --color-body: #c5d4d3;
+      --color-ink: #e4efee;
+      --color-accent: #4dd0cc;
+      --color-button: #4dd0cc;
+      --color-on-button: #06221f;
+      --color-link: #4dd0cc;
+      --color-link-hover: #8be3df;
+      --color-tint: #16302f;
+      --color-wordmark: #4dd0cc;
+      --color-chip: #1b2f31;
+      --color-chip-dot: #6f8786;
+      --color-warn-bg: #3a2a05;
+      --color-warn-ink: #ffd58a;
+      --color-toast-bg: #e4efee;
+      --color-toast-ink: #0f1c1e;
+      --shadow-soft: 0 12px 32px -12px rgba(0, 0, 0, 0.6);
+      --shadow-raised: 0 1px 3px rgba(0, 0, 0, 0.4);
+      --shadow-frame: 0 30px 80px -40px rgba(0, 0, 0, 0.7);
+    }
+  }
+
+  :root[data-theme='dark'] {
+    color-scheme: dark;
+    --color-ground: #081112;
+    --color-sunken: #0d1a1c;
+    --color-surface: #122023;
+    --color-line: #24393b;
+    --color-line-soft: #1b2f31;
+    --color-muted: #93a9a8;
+    --color-body: #c5d4d3;
+    --color-ink: #e4efee;
+    --color-accent: #4dd0cc;
+    --color-button: #4dd0cc;
+    --color-on-button: #06221f;
+    --color-link: #4dd0cc;
+    --color-link-hover: #8be3df;
+    --color-tint: #16302f;
+    --color-wordmark: #4dd0cc;
+    --color-chip: #1b2f31;
+    --color-chip-dot: #6f8786;
+    --color-warn-bg: #3a2a05;
+    --color-warn-ink: #ffd58a;
+    --color-toast-bg: #e4efee;
+    --color-toast-ink: #0f1c1e;
+    --shadow-soft: 0 12px 32px -12px rgba(0, 0, 0, 0.6);
+    --shadow-raised: 0 1px 3px rgba(0, 0, 0, 0.4);
+    --shadow-frame: 0 30px 80px -40px rgba(0, 0, 0, 0.7);
+  }
+}
+
+/* dark: follows the in-app theme, or the system when the app is set to System. */
+@custom-variant dark {
+  &:where([data-theme='dark'], [data-theme='dark'] *) {
+    @slot;
+  }
+  @media (prefers-color-scheme: dark) {
+    &:where(:root:not([data-theme='light']), :root:not([data-theme='light']) *) {
+      @slot;
+    }
+  }
+}
+
+@layer base {
+  :root {
+    color-scheme: light;
+  }
+
+  html {
+    height: 100%;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    min-height: 100%;
+    background: var(--color-ground);
+    color: var(--color-ink);
+    font-family: var(--font-ui);
+    font-size: 16px;
+    line-height: 1.45;
+    -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+  }
+
+  #app {
+    min-height: 100dvh;
+    display: flex;
+    flex-direction: column;
+    /* Set while the status console is docked, so nothing hides behind it. */
+    padding-bottom: var(--console-h, 0px);
+  }
+
+  button {
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+  }
+
+  button:disabled {
+    cursor: default;
+    opacity: 0.5;
+  }
+
+  a {
+    color: var(--color-link);
+    text-decoration: underline;
+  }
+
+  a:hover {
+    color: var(--color-link-hover);
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 2px;
+  }
+}
+
+/* Keyframes shared by components; use them as motion-safe:animate-[fb-name_duration_easing]. */
+@keyframes fb-dot {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.35;
+  }
+}
+
+@keyframes fb-rise {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes fb-pulse {
+  0% {
+    transform: scale(0.35);
+    opacity: 0.9;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 0;
+  }
+}
+
+@keyframes fb-flash {
+  0% {
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--color-accent) 60%, transparent);
+    border-color: var(--color-accent);
+  }
+  100% {
+    box-shadow: 0 0 0 18px transparent;
+  }
+}
+
+@keyframes fb-sheet-in {
+  from {
+    transform: translateY(40px);
+    opacity: 0;
+  }
+  to {
+    transform: none;
+    opacity: 1;
+  }
+}
+
+@keyframes fb-scan {
+  0%,
+  100% {
+    top: 12%;
+  }
+  50% {
+    top: 84%;
+  }
+}
+
+@keyframes fb-caret {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0;
+  }
+}
+
+@keyframes fb-shake {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  20%,
+  60% {
+    transform: translateX(-6px);
+  }
+  40%,
+  80% {
+    transform: translateX(6px);
+  }
+}
+
+@keyframes fb-travel {
+  0% {
+    left: 0;
+    opacity: 0;
+  }
+  15% {
+    opacity: 1;
+  }
+  85% {
+    opacity: 1;
+  }
+  100% {
+    left: calc(100% - 40px);
+    opacity: 0;
+  }
+}
+
+@keyframes fb-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes fb-ring-spin {
+  to {
+    transform: rotate(270deg);
+  }
+}
+
+@keyframes fb-pop {
+  0% {
+    transform: scale(0.6);
+    opacity: 0;
+  }
+  70% {
+    transform: scale(1.06);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1);
+  }
+}

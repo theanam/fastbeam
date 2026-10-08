@@ -1,5 +1,10 @@
 import { useEffect, useState } from 'preact/hooks'
 import { type ViewerItem } from '../../state/media'
+import { cx } from '../classes'
+
+/** A wrapping button with `group/thumb` brightens the thumbnail on hover. */
+const base = 'block rounded-[10px] group-hover/thumb:brightness-105'
+const full = cx(base, 'bg-chip object-cover')
 
 /** Small lazy thumbnail for a media item; used in the gallery strip, the Done list and the Send sheet. */
 export function Thumb({ item, size = 48 }: { item: ViewerItem; size?: number }) {
@@ -22,7 +27,9 @@ export function Thumb({ item, size = 48 }: { item: ViewerItem; size?: number }) 
     }
   }, [item])
   const style = { width: size, height: size }
-  if (!url || failed) return <span class="thumb thumb--empty" style={style} aria-hidden="true" />
-  if (item.kind === 'video') return <video class="thumb" style={style} src={url} muted playsInline preload="metadata" aria-hidden="true" />
-  return <img class="thumb" style={style} src={url} alt="" loading="lazy" onError={() => setFailed(true)} />
+  if (!url || failed) return <span class={cx(base, 'bg-tint')} style={style} aria-hidden="true" />
+  if (item.kind === 'video') return (
+      <video class={full} style={style} src={url} muted playsInline preload="metadata" aria-hidden="true" />
+    )
+  return <img class={full} style={style} src={url} alt="" loading="lazy" onError={() => setFailed(true)} />
 }

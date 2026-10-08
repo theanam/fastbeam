@@ -1,5 +1,6 @@
 import { useState } from 'preact/hooks'
 import { closeSheet, type PairTab } from '../../state/ui'
+import { sheetTitle } from '../classes'
 import { IconButton } from '../components/IconButton'
 import { BackIcon } from '../components/Icons'
 import { Tabs } from '../components/Tabs'
@@ -16,14 +17,16 @@ export function PairSheet({ tab: initialTab, prefill }: { tab: PairTab; prefill?
   const [tab, setTab] = useState<PairTab>(initialTab)
   return (
     <Sheet label="Connect a device" onClose={closeSheet}>
-      <div class="sheet-head sheet-head--plain">
+      <div class="-ml-3 flex flex-none items-center gap-1">
         <IconButton label="Back" onClick={closeSheet}>
           <BackIcon />
         </IconButton>
-        <h2 class="sheet-title">Connect a device</h2>
+        <h2 class={sheetTitle}>Connect a device</h2>
       </div>
       <Tabs tabs={TABS} value={tab} onChange={setTab} label="Pairing method" tone="chip" />
-      <div class="sheet-scroll">{tab === 'show' ? <ShowCode /> : <ScanEnter {...(prefill ? { prefill } : {})} />}</div>
+      <div class="-mx-1 flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto px-1 pb-1">
+        {tab === 'show' ? <ShowCode /> : <ScanEnter {...(prefill ? { prefill } : {})} />}
+      </div>
     </Sheet>
   )
 }

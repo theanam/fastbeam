@@ -5,11 +5,11 @@ export function Switch({ checked, onChange, label }: { checked: boolean; onChang
       role="switch"
       aria-checked={checked}
       aria-label={label}
-      class="switch"
+      class="group/switch inline-flex h-12 w-15 flex-none items-center justify-center rounded-full"
       onClick={() => onChange(!checked)}
     >
-      <span class="switch-track">
-        <span class="switch-knob" />
+      <span class="flex h-8 w-13 justify-start rounded-full bg-line p-[3px] transition-colors duration-160 group-aria-checked/switch:justify-end group-aria-checked/switch:bg-button">
+        <span class="size-[26px] rounded-full bg-white shadow-raised" />
       </span>
     </button>
   )

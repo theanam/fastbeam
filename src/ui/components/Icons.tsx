@@ -21,8 +21,11 @@ export function Mark({ size = 32, class: cls, spark = true }: IconProps & { spar
 
 export function Wordmark({ class: cls }: { class?: string }) {
   return (
-    <span class={cls ? `wordmark ${cls}` : 'wordmark'} aria-label="fastbeam">
-      fast<b>beam</b>
+    <span
+      class={`font-display text-22 leading-none font-extrabold tracking-display whitespace-nowrap desk:text-24${cls ? ` ${cls}` : ''}`}
+      aria-label="fastbeam"
+    >
+      fast<b class="font-[inherit] text-wordmark">beam</b>
     </span>
   )
 }

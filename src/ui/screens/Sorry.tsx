@@ -5,6 +5,13 @@ import { Button } from '../components/Button'
 import { IconButton } from '../components/IconButton'
 import { CloseIcon, DeviceIcon, LaptopIcon } from '../components/Icons'
 import { onPairedDefault } from '../sheets/pairActions'
+import { badge, badgeTone, card, cx, screen, screenTitle } from '../classes'
+
+const node =
+  'inline-flex size-16 flex-none items-center justify-center rounded-full border border-line bg-surface text-muted'
+const stepRow = 'flex items-start gap-3 text-15 leading-[1.45]'
+const stepN =
+  'inline-flex size-7 flex-none items-center justify-center rounded-full bg-tint text-14 font-bold text-link'
 
 /** Screen 11. */
 export function Sorry() {
@@ -33,52 +40,52 @@ export function Sorry() {
           ? 'Codes and links work once. Another device already connected with this one, so the other device is showing a new code now. Ask for that one.'
           : 'fastbeam only sends files device‑to‑device, and these two networks won’t allow a direct link.'
   return (
-    <div class="screen">
-      <header class="screen-head screen-head--right">
-        <IconButton label="Close" class="iconbtn--round" onClick={dismissSorry}>
+    <div class={screen}>
+      <header class="flex min-h-11 items-center justify-end gap-2">
+        <IconButton label="Close" round onClick={dismissSorry}>
           <CloseIcon />
         </IconButton>
       </header>
-      <div class="sorry-art" aria-hidden="true">
-        <span class="sorry-node">
+      <div class="mx-auto flex w-[280px] max-w-full items-center" aria-hidden="true">
+        <span class={node}>
           <DeviceIcon type={device.deviceType} size={28} />
         </span>
-        <span class="sorry-track">
-          <i class="ok" />
-          <i class="x">
+        <span class="flex flex-1 items-center gap-2.5 px-2">
+          <i class="h-1 flex-1 rounded-[2px] bg-accent" />
+          <i class="inline-flex size-7 flex-none items-center justify-center rounded-full bg-warn-bg text-warn-ink">
             <CloseIcon size={16} strokeWidth={2.6} />
           </i>
-          <i class="dash" />
+          <i class="h-1 flex-1 rounded-[2px] bg-[repeating-linear-gradient(90deg,var(--color-line)_0_6px,transparent_6px_12px)]" />
         </span>
-        <span class="sorry-node">
+        <span class={node}>
           <LaptopIcon size={28} />
         </span>
       </div>
-      <div class="stack-10">
-        <h1 class="screen-title screen-title--left">{title}</h1>
-        <p class="screen-copy screen-copy--left">{copy}</p>
-        {cause && s.reason === 'timeout' && <span class="badge badge--warn">{cause}</span>}
+      <div class="flex flex-col gap-2.5">
+        <h1 class={screenTitle.replace('text-center', 'text-left')}>{title}</h1>
+        <p class="text-left text-16 leading-normal text-body text-pretty">{copy}</p>
+        {cause && s.reason === 'timeout' && <span class={cx(badge, badgeTone.warn)}>{cause}</span>}
       </div>
       {s.reason !== 'expired' && (
-      <section class="card card--pad steps">
-        <div class="eyebrow-caps eyebrow-caps--link">This always works</div>
-        <div class="step">
-          <span class="step-n">1</span>
+      <section class={cx(card, 'flex flex-col gap-3.5 p-4')}>
+        <div class="text-13 font-bold tracking-[0.06em] uppercase text-link">This always works</div>
+        <div class={stepRow}>
+          <span class={stepN}>1</span>
           <span>
             Put both devices on the same Wi‑Fi, <strong>or</strong> turn on one phone&rsquo;s hotspot and join it from the other.
           </span>
         </div>
-        <div class="step">
-          <span class="step-n">2</span>
+        <div class={stepRow}>
+          <span class={stepN}>2</span>
           <span>Reopen fastbeam on both. They&rsquo;ll find each other on their own — no code needed.</span>
         </div>
       </section>
       )}
-      <div class="screen-cta stack-10">
+      <div class="mt-auto flex flex-col gap-2.5">
         {s.reason !== 'expired' && (
         <Button
           variant="primary"
-          class="btn--lg"
+          size="lg"
           onClick={() => {
             dismissSorry()
             joinWithCode(s.code, { intent: hasPending(), onPaired: onPairedDefault })
@@ -90,7 +97,7 @@ export function Sorry() {
         {s.reason === 'expired' && (
           <Button
             variant="primary"
-            class="btn--lg"
+            size="lg"
             onClick={() => {
               dismissSorry()
               openPairSheet('scan')
@@ -100,8 +107,7 @@ export function Sorry() {
           </Button>
         )}
         <Button
-          variant="link"
-          class="btn--center"
+          variant="quiet"
           onClick={() => {
             dismissSorry()
             openPairSheet('scan', s.code)

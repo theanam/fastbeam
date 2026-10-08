@@ -3,6 +3,11 @@ import { cancelJoin, formatCode, joining, submitJoinPassword } from '../../net/p
 import { Button } from '../components/Button'
 import { IconButton } from '../components/IconButton'
 import { BackIcon, EyeIcon, EyeOffIcon, LockKeyholeIcon } from '../components/Icons'
+import { alertWarn, codechip, cx, field, inputRow, inputRowWarn, screen, screenCopy, screenTitle } from '../classes'
+
+/** A mono input with the row's 17px semibold text. */
+const pwInput =
+  'h-full min-w-0 flex-1 border-0 bg-transparent font-mono text-17 font-semibold text-ink outline-none placeholder:font-ui placeholder:font-medium placeholder:tracking-normal placeholder:text-muted'
 
 /** Screen 9. Shown only once `auth-required` has arrived, so a host is really there. */
 export function Password() {
@@ -15,28 +20,28 @@ export function Password() {
     submitJoinPassword(pw)
   }
   return (
-    <div class="screen">
-      <header class="screen-head screen-head--left">
+    <div class={screen}>
+      <header class="-ml-3 flex min-h-11 items-center justify-start gap-2">
         <IconButton label="Back" onClick={cancelJoin}>
           <BackIcon />
         </IconButton>
-        <span class="mono codechip">{formatCode(j.code)}</span>
+        <span class={codechip}>{formatCode(j.code)}</span>
       </header>
-      <div class="pw-hero">
-        <span class="pw-lock">
+      <div class="flex flex-col items-center gap-4 pt-6 text-center">
+        <span class="inline-flex size-22 items-center justify-center rounded-[28px] bg-[#0f1c1e] text-[#4dd0cc]">
           <LockKeyholeIcon />
         </span>
-        <h1 class="screen-title">{j.hostName ?? 'The other device'} set a password</h1>
-        <p class="screen-copy">Ask them for it. It&rsquo;s checked on this device and never sent over the internet.</p>
+        <h1 class={screenTitle}>{j.hostName ?? 'The other device'} set a password</h1>
+        <p class={screenCopy}>Ask them for it. It&rsquo;s checked on this device and never sent over the internet.</p>
       </div>
-      <div class="field">
-        <label class="field-label field-label--ink" for="join-pw">
+      <div class={field}>
+        <label class="text-14 font-semibold text-ink" for="join-pw">
           Password
         </label>
-        <div class={`input-row input-row--tall${j.wrong ? ' input-row--warn' : ''}`}>
+        <div class={cx(inputRow.replace('h-13', 'h-14'), j.wrong && inputRowWarn)}>
           <input
             id="join-pw"
-            class="mono-input"
+            class={pwInput}
             type={show ? 'text' : 'password'}
             value={pw}
             autofocus
@@ -53,13 +58,13 @@ export function Password() {
           </IconButton>
         </div>
         {j.wrong && (
-          <div class="alert alert--warn" role="alert">
+          <div class={alertWarn} role="alert">
             That didn&rsquo;t match.{' '}
             {j.triesLeft !== null ? `${j.triesLeft} ${j.triesLeft === 1 ? 'try' : 'tries'} left before the code resets.` : ''}
           </div>
         )}
       </div>
-      <Button variant="primary" class="screen-cta btn--lg" disabled={pw.trim().length < 4 || j.checking} onClick={submit}>
+      <Button variant="primary" size="lg" class="mt-auto" disabled={pw.trim().length < 4 || j.checking} onClick={submit}>
         {j.checking ? 'Checking…' : 'Unlock and connect'}
       </Button>
     </div>

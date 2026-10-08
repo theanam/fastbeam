@@ -2,6 +2,7 @@ import { useEffect, useState } from 'preact/hooks'
 import { codeFromText, joinWithCode } from '../../net/pairing'
 import { toast } from '../../state/toast'
 import { closeSheet, hasPending } from '../../state/ui'
+import { chip as chipClass } from '../classes'
 import { CodeBoxes } from '../components/CodeBoxes'
 import { PasteIcon } from '../components/Icons'
 import { Scanner } from '../components/Scanner'
@@ -58,14 +59,14 @@ export function ScanEnter({ prefill = '' }: { prefill?: string }) {
   return (
     <>
       <Scanner onCode={submit} paused={submitted} />
-      <div class="or-rule">
-        <span />
+      <div class="flex flex-none items-center gap-3 text-14 text-muted">
+        <span class="h-px flex-1 bg-line" />
         or type the code
-        <span />
+        <span class="h-px flex-1 bg-line" />
       </div>
       <CodeBoxes value={code} onChange={setCode} onSubmit={submit} autoFocus={!!prefill} disabled={submitted} />
       {typeof navigator.clipboard?.readText === 'function' && (
-        <button type="button" class="chip" onClick={() => void paste()}>
+        <button type="button" class={chipClass} onClick={() => void paste()}>
           <PasteIcon /> {chip ? `Paste ${chip}` : 'Paste'}
         </button>
       )}

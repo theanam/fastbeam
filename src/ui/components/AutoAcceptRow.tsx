@@ -1,6 +1,7 @@
 import { canOfferAutoAccept, isAutoAccept, setAutoAccept } from '../../state/autoAccept'
 import { getPeer } from '../../state/peers'
 import { chooseSinkKind } from '../../transfer/sinks'
+import { cx, rowText, rowTitle } from '../classes'
 import { Switch } from './Switch'
 
 /**
@@ -15,10 +16,10 @@ export function AutoAcceptRow({ peerId, compact = false }: { peerId: string; com
   const where =
     kind === 'sw' ? 'Files go straight to Downloads' : kind === 'opfs' ? 'Files wait on the Done screen with a Save button' : 'Files download when they finish'
   return (
-    <div class={`row autorow${compact ? ' autorow--compact' : ''}`}>
-      <div class="row-text">
-        <span class="row-title">Auto-accept from {peer.name}</span>
-        <span class="row-sub">
+    <div class={cx('flex items-center gap-3', compact ? 'min-h-13 rounded-btn bg-ground px-3 py-2' : 'min-h-15')}>
+      <div class={rowText}>
+        <span class={rowTitle}>Auto-accept from {peer.name}</span>
+        <span class={cx(compact ? 'text-12' : 'text-13', 'text-muted')}>
           This session only. {where}.{peer.passwordVerified ? '' : ' Keep an eye on the verification code if the network is shared.'}
         </span>
       </div>

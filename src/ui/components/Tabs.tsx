@@ -1,3 +1,5 @@
+import { cx } from '../classes'
+
 export function Tabs<T extends string>({
   tabs,
   value,
@@ -12,11 +14,15 @@ export function Tabs<T extends string>({
   tone?: 'ground' | 'chip'
 }) {
   return (
-    <div role="tablist" aria-label={label} class={`tabs tabs--${tone}`}>
+    <div role="tablist" aria-label={label} class={cx(
+        'grid flex-none auto-cols-[minmax(0,1fr)] grid-flow-col gap-1 rounded-btn p-1',
+        tone === 'chip' ? 'bg-chip' : 'bg-ground',
+      )}>
       {tabs.map((t) => (
         <button
           key={t.value}
           type="button"
+          class="h-10 rounded-[10px] text-15 font-semibold text-muted aria-selected:bg-surface aria-selected:font-bold aria-selected:text-ink aria-selected:shadow-raised"
           role="tab"
           aria-selected={t.value === value}
           tabIndex={t.value === value ? 0 : -1}

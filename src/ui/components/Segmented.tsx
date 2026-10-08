@@ -21,7 +21,7 @@ export function Segmented<T extends string>({
     btn?.focus()
   }
   return (
-    <div role="radiogroup" aria-label={label} class="seg">
+    <div role="radiogroup" aria-label={label} class="grid auto-cols-fr grid-flow-col gap-1 rounded-xl bg-ground p-1">
       {options.map((o, i) => {
         const selected = o.value === value
         return (
@@ -31,6 +31,7 @@ export function Segmented<T extends string>({
             aria-checked={selected}
             tabIndex={selected ? 0 : -1}
             key={o.value}
+            class="h-10 rounded-[9px] text-14 font-semibold text-muted transition-colors duration-120 aria-checked:bg-surface aria-checked:font-bold aria-checked:text-ink aria-checked:shadow-raised"
             onClick={() => onChange(o.value)}
             onKeyDown={(e) => onKey(e, i)}
           >

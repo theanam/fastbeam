@@ -28,12 +28,19 @@ export function Home() {
       }
     >
       {!desktop && <Header />}
-      <div class="home">
-        <main class="home-main">
+      <div class="flex min-h-0 flex-1 flex-col">
+        {/* Sections settle in once, top to bottom, so the eye lands on "you" first. */}
+        <main
+          class={
+            'flex flex-1 flex-col gap-4 px-4 pt-1 pb-6 desk:gap-[22px] desk:px-10 desk:pt-9 desk:pb-10 wide:px-12 wide:pt-10 wide:pb-12 ' +
+            'motion-safe:*:animate-rise motion-safe:[&>:nth-child(2)]:[animation-delay:50ms] ' +
+            'motion-safe:[&>:nth-child(3)]:[animation-delay:100ms] motion-safe:[&>:nth-child(4)]:[animation-delay:150ms]'
+          }
+        >
           {desktop && (
-            <header class="page-head">
-              <h1 class="page-title">Send files to a nearby device</h1>
-              <p class="page-sub">Devices on this Wi‑Fi with fastbeam open show up below.</p>
+            <header class="flex flex-col gap-1.5">
+              <h1 class="m-0 font-display text-30 leading-[1.1] font-bold tracking-display text-balance text-ink desk:text-34">Send files to a nearby device</h1>
+              <p class="text-15 text-muted">Devices on this Wi‑Fi with fastbeam open show up below.</p>
             </header>
           )}
           <Identity />
