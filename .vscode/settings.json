@@ -1,0 +1,24 @@
+{
+  // Lagoon 500. If your editor just turned teal, you found the beam. Keep it to yourself.
+  "peacock.color": "#12a1a6",
+  "workbench.colorCustomizations": {
+    "activityBar.background": "#12a1a6",
+    "activityBar.activeBackground": "#16bfc5",
+    "activityBar.foreground": "#e7e7e7",
+    "activityBar.inactiveForeground": "#e7e7e799",
+    "activityBar.activeBorder": "#fff1d6",
+    "activityBarBadge.background": "#fff1d6",
+    "activityBarBadge.foreground": "#0f1c1e",
+    "titleBar.activeBackground": "#12a1a6",
+    "titleBar.activeForeground": "#e7e7e7",
+    "titleBar.inactiveBackground": "#12a1a699",
+    "titleBar.inactiveForeground": "#e7e7e799",
+    "statusBar.background": "#0b7f80",
+    "statusBar.foreground": "#e7e7e7",
+    "statusBarItem.hoverBackground": "#12a1a6",
+    "statusBarItem.remoteBackground": "#0a6e70",
+    "statusBarItem.remoteForeground": "#e7e7e7",
+    "commandCenter.border": "#e7e7e799",
+    "sash.hoverBorder": "#16bfc5"
+  }
+}
