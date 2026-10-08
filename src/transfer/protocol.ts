@@ -1,4 +1,4 @@
-import { CHUNK_HEADER } from '../config'
+import { CHUNK_HEADER, TEXT_MAX } from '../config'
 import { sha256 } from '../net/hash'
 import type { ControlMessage } from '../net/peerLink'
 
@@ -72,6 +72,45 @@ export const TRANSFER_TYPES = new Set(['offer', 'accept', 'decline', 'file-start
 
 export function isTransferMessage(msg: ControlMessage): msg is TransferMessage {
   return TRANSFER_TYPES.has(msg.type) && typeof msg.transferId === 'string'
+}
+
+function isFileMeta(f: unknown): f is FileMeta {
+  if (typeof f !== 'object' || f === null) return false
+  const m = f as Record<string, unknown>
+  return (
+    typeof m.fileId === 'string' &&
+    typeof m.name === 'string' &&
+    typeof m.mime === 'string' &&
+    (m.relPath === undefined || typeof m.relPath === 'string') &&
+    typeof m.size === 'number' &&
+    m.size >= 0
+  )
+}
+
+/** A peer's offer is either text or a non-empty file list (never both), with every field the receiver reads well-typed. */
+export function isValidOffer(offer: OfferMessage): boolean {
+  if (typeof offer.totalSize !== 'number') return false
+  if (offer.text !== undefined) return offer.files === undefined && typeof offer.text === 'string' && offer.text.length <= TEXT_MAX
+  return Array.isArray(offer.files) && offer.files.length > 0 && offer.files.every(isFileMeta)
+}
+
+/**
+ * The type a received file may be opened as on our origin, or null if it must only be downloaded.
+ * HTML, SVG, XML and the like would run script as fastbeam, so only types that cannot script pass.
+ */
+export function inertType(mime: string): string | null {
+  const t = (mime.split(';')[0] ?? '').trim().toLowerCase()
+  if (t === 'application/pdf') return t
+  // Everything fastbeam sends was produced by a browser, so UTF-8 beats the viewer guessing a legacy encoding.
+  if (t === 'text/plain') return 'text/plain;charset=utf-8'
+  if (/^(audio|video)\/[\w.+-]+$/.test(t)) return t
+  if (/^image\/(png|jpeg|gif|webp|avif|bmp)$/.test(t)) return t
+  return null
+}
+
+/** The same bytes under a type that cannot script on our origin: use this for every blob: URL of a received file. */
+export function inertBlob(blob: Blob, mime: string): Blob {
+  return blob.slice(0, blob.size, inertType(mime) ?? 'application/octet-stream')
 }
 
 const FRAME_FILE = 0x01

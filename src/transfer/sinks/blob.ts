@@ -1,4 +1,4 @@
-import { sanitizeFileName, type FileMeta } from '../protocol'
+import { inertBlob, sanitizeFileName, type FileMeta } from '../protocol'
 import type { SavedFile, Sink } from './types'
 
 function triggerDownload(url: string, name: string): void {
@@ -42,7 +42,8 @@ export class BlobSink implements Sink {
     const blob = new Blob(this.parts[index] as BlobPart[], { type: meta.mime || 'application/octet-stream' })
     this.parts[index] = []
     this.blobs[index] = blob
-    const url = URL.createObjectURL(blob)
+    // Some browsers (iOS) open this URL instead of downloading it, so it must not carry a type that can script.
+    const url = URL.createObjectURL(inertBlob(blob, meta.mime))
     this.urls[index] = url
     // Best effort: browsers that require a gesture ignore this, and the Save button covers it.
     try {

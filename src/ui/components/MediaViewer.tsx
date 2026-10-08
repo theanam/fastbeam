@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'preact/hooks'
 import { closeViewer, viewer, type ViewerItem } from '../../state/media'
-import { formatBytes } from '../../transfer/protocol'
+import { formatBytes, inertBlob } from '../../transfer/protocol'
 import { IconButton } from './Controls'
 import { BackIcon, CloseIcon, DownloadIcon, ShareIcon } from './Icons'
 
@@ -44,7 +44,8 @@ export function MediaViewer() {
       it.blob()
         .then((blob) => {
           if (!alive) return
-          cache.current.set(it, { url: URL.createObjectURL(blob), blob })
+          // Re-typed: the peer's type (maybe SVG or HTML) must never reach a blob: URL on our origin.
+          cache.current.set(it, { url: URL.createObjectURL(inertBlob(blob, it.type)), blob })
           bump((n) => n + 1)
         })
         .catch(() => {
@@ -67,14 +68,17 @@ export function MediaViewer() {
   }
 
   const save = () => {
-    if (!loaded || !('url' in loaded)) return
+    if (!loaded || !('blob' in loaded)) return
+    // A fresh URL rather than loaded.url, because iOS may open the link instead of saving it.
+    const url = URL.createObjectURL(inertBlob(loaded.blob, item.type))
     const a = document.createElement('a')
-    a.href = loaded.url
+    a.href = url
     a.download = item.name
     a.rel = 'noopener'
     document.body.appendChild(a)
     a.click()
     a.remove()
+    window.setTimeout(() => URL.revokeObjectURL(url), 60_000)
   }
 
   const canShare = (): boolean => {
@@ -139,7 +143,7 @@ export function MediaViewer() {
               <ShareIcon size={20} />
             </IconButton>
           )}
-          <IconButton label="Save" class="viewer-btn" disabled={!loaded || !('url' in loaded)} onClick={save}>
+          <IconButton label="Save" class="viewer-btn" disabled={!loaded || !('blob' in loaded)} onClick={save}>
             <DownloadIcon size={22} />
           </IconButton>
         </div>
@@ -228,7 +232,7 @@ export function Thumb({ item, size = 48 }: { item: ViewerItem; size?: number }) 
       .blob()
       .then((b) => {
         if (!alive) return
-        u = URL.createObjectURL(b)
+        u = URL.createObjectURL(inertBlob(b, item.type))
         setUrl(u)
       })
       .catch(() => alive && setFailed(true))

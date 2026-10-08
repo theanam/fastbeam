@@ -13,7 +13,8 @@ export interface ViewerItem {
 
 export const viewer = signal<{ items: ViewerItem[]; index: number } | null>(null)
 
-const IMAGE_EXT = /\.(jpe?g|png|gif|webp|avif|bmp|svg|heic|heif)$/i
+// No svg: it can script, so it is never previewed on our origin (see inertType).
+const IMAGE_EXT = /\.(jpe?g|png|gif|webp|avif|bmp|heic|heif)$/i
 const VIDEO_EXT = /\.(mp4|m4v|mov|webm|mkv|ogv|3gp)$/i
 
 export function mediaKind(type: string, name: string): MediaKind | null {

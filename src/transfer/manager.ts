@@ -8,7 +8,7 @@ import { isAutoAccept } from '../state/autoAccept'
 import { logger } from '../state/log'
 import type { Peer } from '../state/peers'
 import { toast } from '../state/toast'
-import { formatBytes, isTransferMessage, type OfferMessage } from './protocol'
+import { formatBytes, isTransferMessage, isValidOffer, type OfferMessage } from './protocol'
 import { IncomingTransfer } from './receiver'
 import { OutgoingTransfer } from './sender'
 import { chooseSinkKind } from './sinks'
@@ -87,11 +87,7 @@ export function handleControl(peer: Peer, link: PeerLink, msg: ControlMessage): 
   if (!isTransferMessage(msg)) return
   if (msg.type === 'offer') {
     const offer = msg as OfferMessage
-    const validFiles = (offer.files ?? []).every(
-      (f) => typeof f.fileId === 'string' && typeof f.name === 'string' && typeof f.size === 'number' && f.size >= 0,
-    )
-    const validText = typeof offer.text === 'string' && offer.text.length <= 64 * 1024
-    if ((!offer.files?.length && !validText) || !validFiles || typeof offer.totalSize !== 'number') return
+    if (!isValidOffer(offer)) return
     if (busy(peer, link)) {
       L.warn(`offer from ${peer.name} declined: busy`)
       link.sendControl({ type: 'decline', transferId: offer.transferId, reason: 'busy' })

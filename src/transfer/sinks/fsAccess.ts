@@ -1,4 +1,4 @@
-import { sanitizeFileName, sanitizeRelPath, type FileMeta } from '../protocol'
+import { inertType, sanitizeFileName, sanitizeRelPath, type FileMeta } from '../protocol'
 import type { SavedFile, Sink } from './types'
 
 // Minimal typings for the File System Access API (Chromium desktop).
@@ -88,11 +88,15 @@ export class FsAccessSink implements Sink {
       const h = this.handles[i]
       const saved: SavedFile = { name: sanitizeFileName(f.name), size: f.size, type: f.mime }
       if (h) {
-        saved.open = async () => {
-          const file = await h.getFile()
-          const url = URL.createObjectURL(file)
-          window.open(url, '_blank', 'noopener')
-          window.setTimeout(() => URL.revokeObjectURL(url), 60_000)
+        // Force the vetted type: getFile() would infer one from the peer-chosen name (e.g. .html).
+        const type = inertType(f.mime)
+        if (type) {
+          saved.open = async () => {
+            const file = await h.getFile()
+            const url = URL.createObjectURL(file.slice(0, file.size, type))
+            window.open(url, '_blank', 'noopener')
+            window.setTimeout(() => URL.revokeObjectURL(url), 60_000)
+          }
         }
         saved.blob = () => h.getFile()
       }

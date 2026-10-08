@@ -1,5 +1,5 @@
 import { logger } from '../../state/log'
-import { sanitizeFileName, type FileMeta } from '../protocol'
+import { inertBlob, sanitizeFileName, type FileMeta } from '../protocol'
 import type { SavedFile, Sink } from './types'
 
 const L = logger('sink')
@@ -154,7 +154,8 @@ export class OpfsSink implements Sink {
       if (file) {
         saved.blob = async () => file
         saved.save = () => {
-          const url = URL.createObjectURL(file)
+          // iOS may open this URL instead of downloading it, so it must not carry a type that can script.
+          const url = URL.createObjectURL(inertBlob(file, f.mime))
           triggerDownload(url, saved.name)
           window.setTimeout(() => URL.revokeObjectURL(url), 120_000)
         }

@@ -1,9 +1,14 @@
 // @vitest-environment node
 import { describe, expect, it } from 'vitest'
+import { TEXT_MAX } from '../config'
 import {
   decodeChunk,
   encodeChunk,
   formatBytes,
+  inertBlob,
+  inertType,
+  isValidOffer,
+  type OfferMessage,
   sanitizeFileName,
   sanitizeRelPath,
   singleUrl,
@@ -65,5 +70,50 @@ describe('singleUrl', () => {
     expect(singleUrl(' https://fastbeam.app/#K7QX4M ')).toBe('https://fastbeam.app/#K7QX4M')
     expect(singleUrl('see https://example.com')).toBeNull()
     expect(singleUrl('javascript:alert(1)')).toBeNull()
+  })
+})
+
+describe('inertType', () => {
+  it('allows types that cannot script our origin', () => {
+    expect(inertType('application/pdf')).toBe('application/pdf')
+    expect(inertType('Text/Plain; charset=latin1')).toBe('text/plain;charset=utf-8')
+    expect(inertType('audio/mpeg')).toBe('audio/mpeg')
+    expect(inertType('image/png')).toBe('image/png')
+  })
+  it('refuses anything that can run script or is unknown', () => {
+    for (const t of ['text/html', 'application/xhtml+xml', 'image/svg+xml', 'text/xml', 'application/xml', 'application/octet-stream', ''])
+      expect(inertType(t)).toBeNull()
+  })
+})
+
+describe('inertBlob', () => {
+  it('keeps the bytes and vetted type, and demotes anything that could script', async () => {
+    const svg = new Blob(['<svg/>'], { type: 'image/svg+xml' })
+    const inert = inertBlob(svg, svg.type)
+    expect(inert.type).toBe('application/octet-stream')
+    expect(await inert.text()).toBe('<svg/>')
+    expect(inertBlob(new Blob(['x'], { type: 'image/png' }), 'image/png').type).toBe('image/png')
+  })
+})
+
+describe('isValidOffer', () => {
+  const file = { fileId: 'a', name: 'a.txt', size: 3, mime: 'text/plain' }
+  const offer = (extra: object): OfferMessage => ({ type: 'offer', transferId: 't', totalSize: 3, ...extra }) as OfferMessage
+
+  it('accepts well-formed file and text offers', () => {
+    expect(isValidOffer(offer({ files: [file] }))).toBe(true)
+    expect(isValidOffer(offer({ files: [{ ...file, mime: '', relPath: 'dir/a.txt' }] }))).toBe(true)
+    expect(isValidOffer(offer({ text: 'hello' }))).toBe(true)
+  })
+  it('rejects fields the sinks would choke on', () => {
+    const { mime: _, ...noMime } = file
+    for (const files of [[noMime], [{ ...file, mime: 1 }], [{ ...file, relPath: 5 }], [{ ...file, size: -1 }], [null], { 0: file, length: 1 }])
+      expect(isValidOffer(offer({ files }))).toBe(false)
+    expect(isValidOffer(offer({ files: [] }))).toBe(false)
+    expect(isValidOffer(offer({ text: 'x'.repeat(TEXT_MAX + 1) }))).toBe(false)
+    // The receiver treats any text as a text transfer, so files must not smuggle an unchecked one in.
+    expect(isValidOffer(offer({ files: [file], text: 'x'.repeat(TEXT_MAX + 1) }))).toBe(false)
+    expect(isValidOffer(offer({ files: [file], text: 'hi' }))).toBe(false)
+    expect(isValidOffer(offer({ files: [file], totalSize: '3' }))).toBe(false)
   })
 })
