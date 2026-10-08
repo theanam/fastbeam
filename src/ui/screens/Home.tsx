@@ -12,22 +12,30 @@ import {
   pendingFiles,
   pendingText,
 } from '../../state/ui'
+import { AppFrame, useIsDesktop } from '../components/AppFrame'
 import { Button, IconButton } from '../components/Controls'
 import { EditableName } from '../components/EditableName'
 import { Header } from '../components/Header'
-import { CloseIcon, CodeIcon, DeviceIcon, ScanIcon } from '../components/Icons'
+import { CheckIcon, CloseIcon, CodeIcon, DeviceIcon, ScanIcon, ShieldPlainIcon, WifiIcon } from '../components/Icons'
 import { PairPanel } from '../components/PairPanel'
 import { Tile } from '../components/Tile'
 
-function useIsDesktop(): boolean {
-  const [wide, setWide] = useState(() => window.matchMedia('(min-width: 900px)').matches)
-  useEffect(() => {
-    const mq = window.matchMedia('(min-width: 900px)')
-    const on = () => setWide(mq.matches)
-    mq.addEventListener('change', on)
-    return () => mq.removeEventListener('change', on)
-  }, [])
-  return wide
+/** Who this device is, always at the top so people know what the other side will see. */
+function Identity() {
+  return (
+    <section class="me-card" aria-label="This device">
+      <span class="me-icon" aria-hidden="true">
+        <DeviceIcon type={device.deviceType} size={28} />
+      </span>
+      <div class="me-text">
+        <div class="eyebrow">You're visible as</div>
+        <EditableName />
+        <div class="me-sub">
+          {device.platform} &middot; {device.browser}
+        </div>
+      </div>
+    </section>
+  )
 }
 
 /** Screen 1. */
@@ -39,30 +47,49 @@ function Looking() {
   }, [])
 
   return (
-    <main class="home-main">
+    <section class="looking" aria-label="Looking for devices">
       <div class="pulse" aria-hidden="true">
         <div class="pulse-ring" />
         <div class="pulse-ring" />
         <div class="pulse-ring" />
         <div class="pulse-core" />
         <div class="pulse-self">
-          <DeviceIcon type={device.deviceType} size={36} />
+          <WifiIcon size={30} />
         </div>
       </div>
-      <div class="home-identity">
-        <div class="eyebrow">You're visible as</div>
-        <EditableName />
+      <div class="looking-text">
+        <h2 class="looking-title">{stillLooking ? 'Still looking' : 'Looking for devices'}</h2>
         <p class="home-hint" aria-live="polite">
           {stillLooking ? (
-            <>Still looking. Different Wi‑Fi? Use a code.</>
+            <>Different Wi‑Fi? Use a code instead.</>
           ) : (
             <>
-              Looking for devices on this Wi‑Fi. Open <strong>fastbeam.app</strong> on the other one.
+              Open <strong>fastbeam.app</strong> on the other device, on this same Wi‑Fi.
             </>
           )}
         </p>
       </div>
-    </main>
+      <ol class="howto" aria-label="How it works">
+        <li>
+          <span class="howto-icon" aria-hidden="true">
+            <WifiIcon size={20} />
+          </span>
+          <span>Open fastbeam on both devices</span>
+        </li>
+        <li>
+          <span class="howto-icon" aria-hidden="true">
+            <DeviceIcon type="phone" size={20} />
+          </span>
+          <span>Pick the other device when it appears</span>
+        </li>
+        <li>
+          <span class="howto-icon" aria-hidden="true">
+            <CheckIcon size={20} />
+          </span>
+          <span>They accept, and it goes straight across</span>
+        </li>
+      </ol>
+    </section>
   )
 }
 
@@ -94,18 +121,16 @@ function Nearby({ peers, desktop }: { peers: Peer[]; desktop: boolean }) {
     openSendSheet(p.deviceId)
   }
   return (
-    <main class="home-main home-main--grid">
-      <section class="home-identity home-identity--left">
-        <div class="eyebrow">You're visible as</div>
-        <EditableName />
-      </section>
-      <PendingBanner />
+    <section class="nearby" aria-label="Nearby devices">
       <div class="grid-head">
-        <div class="eyebrow-caps live">
-          <span class="dot-live" aria-hidden="true" />
-          {desktop ? 'Drop files on a device, or click one' : 'Tap a device to send'}
+        <div class="grid-head-text">
+          <h2 class="section-title">Nearby devices</h2>
+          <div class="live">
+            <span class="dot-live" aria-hidden="true" />
+            {desktop ? 'Drop files on a device, or click one' : 'Tap a device to send'}
+          </div>
         </div>
-        <div class="row-sub">{peers.length} found</div>
+        <div class="count-chip">{peers.length} found</div>
       </div>
       {crowded && (
         <div class="alert alert--warn" role="note">
@@ -123,12 +148,12 @@ function Nearby({ peers, desktop }: { peers: Peer[]; desktop: boolean }) {
         </Button>
       )}
       {desktop && (
-        <div class="row-sub">
-          Tip: press <kbd class="kbd">{navigator.platform.includes('Mac') ? '⌘ V' : 'Ctrl V'}</kbd> anywhere to send what&rsquo;s on
-          your clipboard.
+        <div class="row-sub tip">
+          Tip: press <kbd class="kbd">{navigator.platform.includes('Mac') ? '⌘ V' : 'Ctrl V'}</kbd> anywhere to send
+          what&rsquo;s on your clipboard.
         </div>
       )}
-    </main>
+    </section>
   )
 }
 
@@ -151,23 +176,52 @@ function PairEntry() {
   )
 }
 
+/** Desktop side panel footer: the one promise people need before sending anything. */
+function PrivacyNote() {
+  return (
+    <section class="privacy">
+      <span class="privacy-icon" aria-hidden="true">
+        <ShieldPlainIcon size={20} />
+      </span>
+      <div>
+        <div class="privacy-title">Nothing is uploaded</div>
+        <p class="privacy-copy">Files and text go straight between the two browsers, encrypted. No accounts.</p>
+      </div>
+    </section>
+  )
+}
+
 export function Home() {
   const peers = visiblePeers.value
   const desktop = useIsDesktop()
   return (
-    <div class={`shell${dragging.value ? ' shell--dragging' : ''}`}>
-      <Header />
-      <div class="home">
-        {peers.length === 0 ? (
+    <AppFrame
+      desktop={desktop}
+      dragging={dragging.value}
+      aside={
+        desktop ? (
           <>
-            <Looking />
-            <PendingBanner />
+            <PairPanel />
+            <PrivacyNote />
           </>
-        ) : (
-          <Nearby peers={peers} desktop={desktop} />
-        )}
-        {desktop ? <PairPanel /> : <PairEntry />}
+        ) : undefined
+      }
+    >
+      {!desktop && <Header />}
+      <div class="home">
+        <main class="home-main">
+          {desktop && (
+            <header class="page-head">
+              <h1 class="page-title">Send files to a nearby device</h1>
+              <p class="page-sub">Devices on this Wi‑Fi with fastbeam open show up below.</p>
+            </header>
+          )}
+          <Identity />
+          <PendingBanner />
+          {peers.length === 0 ? <Looking /> : <Nearby peers={peers} desktop={desktop} />}
+        </main>
+        {!desktop && <PairEntry />}
       </div>
-    </div>
+    </AppFrame>
   )
 }
