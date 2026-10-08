@@ -51,13 +51,17 @@ function joinDiscoveryRoom(id: string): RoomHandle {
 
 let running: Promise<void> | null = null
 
-/** Probe and (re)join rooms. Leaves rooms whose key changed before joining the new ones. */
-export function runDiscovery(): Promise<void> {
+/**
+ * Probe and (re)join rooms. Leaves rooms whose key changed before joining the new ones.
+ * Re-runs keep the current badge on screen; only the first run (or an explicit "Run again") shows
+ * "Checking network", so a background re-probe never flickers the header.
+ */
+export function runDiscovery(opts: { announce?: boolean; reason?: string } = {}): Promise<void> {
   if (running) return running
   running = (async () => {
     probing.value = true
-    nat.value = 'checking'
-    L.info('STUN probe starting')
+    if (lastProbe.value === null || opts.announce) nat.value = 'checking'
+    L.info(`STUN probe starting${opts.reason ? ` (${opts.reason})` : ''}`)
     const t0 = Date.now()
     let probe: ProbeResult
     try {
@@ -116,24 +120,30 @@ export async function rejoinRooms(reason: string): Promise<void> {
 export function initDiscovery(): void {
   void runDiscovery()
 
-  window.addEventListener('online', () => {
-    L.info('browser back online: re-running discovery')
-    void runDiscovery()
-  })
+  window.addEventListener('online', () => void runDiscovery({ reason: 'browser back online' }))
   window.addEventListener('offline', () => L.warn('browser reports offline'))
 
-  const conn = (navigator as Navigator & { connection?: EventTarget }).connection
-  conn?.addEventListener('change', () => {
-    L.info('network change event: re-running discovery')
-    void runDiscovery()
-  })
+  // The Network Information API fires "change" on every bandwidth estimate; only a change of network
+  // type (wifi → cellular, …) means our public address may differ. Everything else is ignored.
+  const conn = (navigator as Navigator & { connection?: EventTarget & { type?: string; effectiveType?: string } }).connection
+  if (conn) {
+    let lastType = conn.type ?? 'unknown'
+    conn.addEventListener('change', () => {
+      const type = conn.type ?? 'unknown'
+      if (type === lastType) {
+        L.debug('connection estimate changed; same network type, ignoring')
+        return
+      }
+      lastType = type
+      void runDiscovery({ reason: `network type is now ${type}` })
+    })
+  }
 
   let hiddenAt = 0
   document.addEventListener('visibilitychange', () => {
     if (document.visibilityState === 'hidden') hiddenAt = Date.now()
     else if (hiddenAt && Date.now() - hiddenAt > REDISCOVER_HIDDEN_MS) {
-      L.info(`tab visible after ${Math.round((Date.now() - hiddenAt) / 1000)} s hidden: re-running discovery`)
-      void runDiscovery()
+      void runDiscovery({ reason: `tab visible after ${Math.round((Date.now() - hiddenAt) / 1000)} s hidden` })
     }
   })
 }

@@ -117,7 +117,7 @@ export function Settings() {
           <NetworkBadge />
         </div>
         <p class="settings-note">{NAT_DETAIL[nat.value]}</p>
-        <Button variant="link" disabled={probing.value} onClick={() => void runDiscovery()}>
+        <Button variant="link" disabled={probing.value} onClick={() => void runDiscovery({ announce: true, reason: 'run again from Settings' })}>
           {probing.value ? 'Checking…' : 'Run again'}
         </Button>
       </section>
