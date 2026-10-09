@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'preact/hooks'
+import { useEffect, useMemo, useRef, useState } from 'preact/hooks'
 import { TEXT_MAX } from '../../config'
 import { device } from '../../state/identity'
 import { itemsFromFiles, mediaKind, openViewer } from '../../state/media'
@@ -17,6 +17,9 @@ const TABS = [
   { value: 'files', label: 'Files' },
   { value: 'text', label: 'Text or link' },
 ] as const
+
+/** Decoding a multi-MB photo or video just for a 40 px thumbnail stalls phones; bigger files get an icon. */
+const THUMB_MAX_BYTES = 30 * 1024 * 1024
 
 function fileIcon(f: File) {
   if (f.type.startsWith('image/')) return <ImageIcon />
@@ -73,6 +76,10 @@ export function SendSheet({ peerId, tab: initialTab }: { peerId: string; tab: Se
   useEffect(() => {
     if (!peer) closeSheet()
   }, [peer])
+
+  // One stable viewer item per file. Building them inline in the render gave Thumb a new item every
+  // render, so it re-created the blob URL and re-decoded the whole picked file on each re-render.
+  const items = useMemo(() => new Map(files.map((f) => [f, itemsFromFiles([f])[0]] as const)), [files])
 
   if (!peer) return null
   const total = files.reduce((n, f) => n + f.size, 0)
@@ -158,17 +165,17 @@ export function SendSheet({ peerId, tab: initialTab }: { peerId: string; tab: Se
               <ul class="selected-list">
                 {files.map((f, i) => (
                   <li key={fileKey(f)} class="selected-item">
-                    {mediaKind(f.type, f.name) ? (
+                    {items.get(f) && f.size <= THUMB_MAX_BYTES ? (
                       <button
                         type="button"
                         class="thumb-btn"
                         aria-label={`Preview ${f.name}`}
                         onClick={() => {
-                          const items = itemsFromFiles(files)
-                          openViewer(items, Math.max(0, items.findIndex((it) => it.name === f.name && it.size === f.size)))
+                          const all = itemsFromFiles(files)
+                          openViewer(all, Math.max(0, all.findIndex((it) => it.name === f.name && it.size === f.size)))
                         }}
                       >
-                        <Thumb item={itemsFromFiles([f])[0]!} size={40} />
+                        <Thumb item={items.get(f)!} size={40} />
                       </button>
                     ) : (
                       <span class="selected-icon">{fileIcon(f)}</span>
