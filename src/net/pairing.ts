@@ -9,6 +9,7 @@ import {
   CODE_ALPHABET,
   CODE_LENGTH,
   CODE_TTL_MS,
+  JOIN_ERROR_GRACE_MS,
   PAIR_RETRY_MS,
   PAIR_TIMEOUT_MS,
   PASSWORD_MIN,
@@ -30,7 +31,7 @@ import {
   verifyAuthMac,
 } from './pairAuth'
 import { createPeerLink, runIntroduction, type ControlMessage, type PeerLink } from './peerLink'
-import { attachPeer, helloMessage, isHello, sendUntil, waitForControl, type HelloMessage } from './session'
+import { attachPeer, exchangeHello, helloMessage, isHello, sendUntil, waitForControl, type HelloMessage } from './session'
 import { trysteroSignaling, type RoomHandle } from './signaling'
 import { suggestPassword } from './wordlist'
 
@@ -254,9 +255,7 @@ async function hostIntro(room: HostRoom, link: PeerLink, previous: Promise<unkno
   }
   // Nothing else may slip in while this introduction completes.
   room.retired = true
-  const theirs = waitForControl(link, PEER_TIMEOUT_MS, isHello)
-  sendUntil(link, helloMessage(), theirs)
-  const hello = (await theirs) as HelloMessage
+  const hello = await exchangeHello(link, PEER_TIMEOUT_MS)
   const peer = await attachPeer(link, hello, { paired: true, passwordVerified })
   flashPeer(peer.deviceId)
   // The code is single-use: show a fresh one, keep this room alive for the peer that used it.
@@ -403,6 +402,8 @@ interface JoinSession {
   link: PeerLink | null
   /** The link already served discovery; closing it would drop the device entirely. */
   sharedLink: boolean
+  /** Channels open in the code room still waiting for a host message. */
+  waiting: number
   timers: number[]
   password: ((pw: string) => void) | null
   done: boolean
@@ -437,15 +438,43 @@ function failJoin(session: JoinSession, reason: SorryState['reason']): void {
 
 async function joinerIntro(session: JoinSession, link: PeerLink, previous: Promise<unknown> | null): Promise<void> {
   await link.ready
-  if (previous) {
-    L.debug(`code ${session.code}: connection is being introduced by another room; waiting`)
-    await previous.catch(() => {})
-    if (!link.open) {
-      failJoin(session, 'closed')
+  if (session.done) {
+    if (!link.attachedTo) link.close()
+    return
+  }
+  // Not necessarily the host: an earlier joiner stays in the code room to keep its connection, and
+  // Trystero connects us to everyone there. Only a host message claims the session (and stops the join
+  // timers, which keep running for the real host until then).
+  session.waiting++
+  L.info(`peer in the room for code ${session.code}, channel open`, { sharedWithDiscovery: !!link.attachedTo })
+  patchJoin({ step: 'opening' })
+
+  let first: ControlMessage
+  try {
+    if (previous) {
+      L.debug(`code ${session.code}: connection is being introduced by another room; waiting`)
+      await previous.catch(() => {})
+      if (!link.open) throw new Error('closed')
+    }
+    first = await waitForControl(
+      link,
+      PEER_TIMEOUT_MS,
+      (m) => m.type === 'auth-required' || m.type === 'code-expired' || (m.type === 'pair-open' && m.code === session.code),
+    )
+  } catch {
+    session.waiting--
+    if (!link.attachedTo) link.close()
+    if (session.done || session.link) return
+    if (session.waiting > 0) {
+      L.warn(`a peer in the room for code ${session.code} went quiet; another is still answering`)
       return
     }
+    L.warn(`a peer in the room for code ${session.code} went quiet; waiting ${PAIR_RETRY_MS / 1000} s more for the host`)
+    session.timers.push(window.setTimeout(() => failJoin(session, 'closed'), PAIR_RETRY_MS))
+    return
   }
-  if (session.done) {
+  session.waiting--
+  if (session.done || session.link) {
     if (!link.attachedTo) link.close()
     return
   }
@@ -453,20 +482,7 @@ async function joinerIntro(session: JoinSession, link: PeerLink, previous: Promi
   session.sharedLink = !!link.attachedTo
   for (const t of session.timers) window.clearTimeout(t)
   session.timers = []
-  L.info(`found host for code ${session.code}, channel open`, { sharedWithDiscovery: session.sharedLink })
-  patchJoin({ step: 'opening' })
-
-  let first: ControlMessage
-  try {
-    first = await waitForControl(
-      link,
-      PEER_TIMEOUT_MS,
-      (m) => m.type === 'auth-required' || m.type === 'code-expired' || (m.type === 'pair-open' && m.code === session.code),
-    )
-  } catch {
-    failJoin(session, 'closed')
-    return
-  }
+  L.info(`found host for code ${session.code}`, { sharedWithDiscovery: session.sharedLink })
 
   if (first.type === 'code-expired') {
     failJoin(session, 'expired')
@@ -536,6 +552,7 @@ async function joinerIntro(session: JoinSession, link: PeerLink, previous: Promi
     if (!passwordVerified) sendUntil(link, { type: 'pair-join', code: session.code }, theirs)
     sendUntil(link, helloMessage(), theirs)
     const hello = (await theirs) as HelloMessage
+    link.sendControl(helloMessage()) // one more copy now the host can hear it, as exchangeHello does
     const peer = await attachPeer(link, hello, { paired: true, passwordVerified })
     endJoin(session)
     session.outcome = 'paired'
@@ -577,6 +594,7 @@ export function joinWithCode(code: string, opts: { intent?: boolean; onPaired: (
     handle: null,
     link: null,
     sharedLink: false,
+    waiting: 0,
     timers: [],
     password: null,
     done: false,
@@ -609,7 +627,14 @@ export function joinWithCode(code: string, opts: { intent?: boolean; onPaired: (
       },
       onPeerLeave() {},
       onError() {
-        if (!session.link) failJoin(session, 'timeout')
+        // Trystero also reports this for a peer it then reaches through another room (one connection
+        // serves every room), so give a channel a moment to open before giving up.
+        if (session.done || session.link || session.waiting > 0) return
+        session.timers.push(
+          window.setTimeout(() => {
+            if (!session.link && session.waiting === 0) failJoin(session, 'timeout')
+          }, JOIN_ERROR_GRACE_MS),
+        )
       },
     })
     session.timers.push(

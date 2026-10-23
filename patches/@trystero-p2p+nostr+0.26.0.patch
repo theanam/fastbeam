@@ -1,0 +1,34 @@
+diff --git a/node_modules/@trystero-p2p/nostr/dist/index.mjs b/node_modules/@trystero-p2p/nostr/dist/index.mjs
+index 2445288..4d5713c 100644
+--- a/node_modules/@trystero-p2p/nostr/dist/index.mjs
++++ b/node_modules/@trystero-p2p/nostr/dist/index.mjs
+@@ -40,7 +40,10 @@ const retireRelay = (client) => {
+ 	client.close?.();
+ 	return true;
+ };
+-const now = () => Math.floor(Date.now() / 1e3);
++// fastbeam patch: signaling time follows the app's measured clock offset, and subscriptions take events up
++// to sinceSlackS older than "now", so a peer whose clock lags a little is still heard (src/net/clock.ts).
++const now = () => Math.floor((Date.now() + (globalThis.__fastbeamClockOffsetMs ?? 0)) / 1e3);
++const sinceSlackS = 15;
+ const topicToKind = (topic) => kindCache[topic] ??= strToNum(topic, 1e4) + 2e4;
+ const createEvent = async (topic, content) => {
+ 	const payload = {
+@@ -69,7 +72,7 @@ const subscribe = (subId, topic) => toJson([
+ 	subId,
+ 	{
+ 		kinds: [topicToKind(topic)],
+-		since: now(),
++		since: now() - sinceSlackS,
+ 		["#x"]: [topic]
+ 	}
+ ]);
+@@ -129,7 +132,7 @@ const flushBatch = (client) => {
+ 	if (!batcher || batcher.topics.size === 0) return;
+ 	const topics = [...batcher.topics.keys()];
+ 	const chunks = [];
+-	const since = now();
++	const since = now() - sinceSlackS;
+ 	for (let i = 0; i < topics.length; i += maxTopicsPerSubscription) chunks.push(topics.slice(i, i + maxTopicsPerSubscription));
+ 	while (batcher.subIds.length > chunks.length) {
+ 		const subId = batcher.subIds.pop();

@@ -1,6 +1,8 @@
 /** Startup side effects: discovery, pairing links, share target, drag/paste capture, transfer guards. */
-import { initDiscovery } from './net/discovery'
-import { codeFromHash, joinWithCode } from './net/pairing'
+import { discovering, initDiscovery } from './net/discovery'
+import { codeFromHash, host, joinWithCode } from './net/pairing'
+import { initClockSync } from './net/clock'
+import { initRelayWatch } from './net/relays'
 import { initSessionBroadcast } from './net/session'
 import { device, deviceId } from './state/identity'
 import { logger } from './state/log'
@@ -119,7 +121,10 @@ export function boot(): void {
   initDragAndPaste()
   void cleanupOpfs().then(() => probeOpfs())
   void consumeShareTarget().then(() => consumePairLink())
+  initClockSync()
   initDiscovery()
+  // Discovery rooms and a host's code room announce every minute; with neither, relay silence is expected.
+  initRelayWatch(() => discovering.value || host.value !== null)
   if (import.meta.env.DEV) installDevHooks()
 }
 

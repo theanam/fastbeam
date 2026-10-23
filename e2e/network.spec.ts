@@ -67,6 +67,22 @@ test('two tabs discover each other and move a file', async ({ browser }, info) =
   await expect(a.getByRole('button', { name: 'Open link' })).toBeVisible()
 })
 
+test('a device whose clock runs 45 s ahead is still found within seconds', async ({ browser }, info) => {
+  test.skip(info.project.name !== 'desktop', 'runs once')
+  const { a, b } = await openPair(browser, 'Skew')
+  // B's clock is ahead, like a Windows PC that has not synced in a while. Relays filter events by the
+  // sender's timestamp against the listener's "since", so without the correction B missed every reply to
+  // its first announces and met A only at Trystero's next one-minute announce.
+  await b.addInitScript(() => {
+    const real = Date.now.bind(Date)
+    Date.now = () => real() + 45_000
+  })
+  await a.goto('/')
+  await b.goto('/')
+  await expect(a.getByRole('button', { name: /Send to Skew B/ })).toBeVisible({ timeout: 30_000 })
+  await expect(b.getByRole('button', { name: /Send to Skew A/ })).toBeVisible({ timeout: 30_000 })
+})
+
 test('password-protected pairing by code', async ({ browser }, info) => {
   test.skip(info.project.name !== 'desktop', 'runs once')
   const { a, b } = await openPair(browser, 'Lock')

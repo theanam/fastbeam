@@ -9,6 +9,7 @@ import { lookupBdixIp } from './bdix'
 const L = logger('discover')
 import { roomId } from './hash'
 import { createPeerLink, runIntroduction } from './peerLink'
+import { reconnectRelays } from './relays'
 import { introduceDiscovery } from './session'
 import { trysteroSignaling, type RoomHandle } from './signaling'
 import { stunProbe, type ProbeResult } from './stunProbe'
@@ -103,9 +104,11 @@ export function runDiscovery(opts: { announce?: boolean; reason?: string } = {})
 
 /**
  * Leave and re-join every discovery room. Used after the tab comes back from the background: iOS and
- * Android kill relay websockets silently, and a room on a zombie socket never announces again.
+ * Android kill relay websockets silently, and a room on a zombie socket never announces again. Trystero
+ * reuses its relay sockets across rooms, so they are reconnected first or the rooms come back on them.
  */
 export async function rejoinRooms(reason: string): Promise<void> {
+  reconnectRelays(reason)
   if (rooms.size === 0) {
     void runDiscovery()
     return
@@ -135,7 +138,12 @@ export function initDiscovery(): void {
     void (running ?? Promise.resolve()).then(() => runDiscovery({ reason: `BDIX discovery ${on ? 'on' : 'off'}` }))
   })
 
-  window.addEventListener('online', () => void runDiscovery({ reason: 'browser back online' }))
+  // A new network leaves the relay sockets on the old one, open but dead.
+  const networkChanged = (reason: string) => {
+    reconnectRelays(reason)
+    void runDiscovery({ reason })
+  }
+  window.addEventListener('online', () => networkChanged('browser back online'))
   window.addEventListener('offline', () => L.warn('browser reports offline'))
 
   // The Network Information API fires "change" on every bandwidth estimate; only a change of network
@@ -150,7 +158,7 @@ export function initDiscovery(): void {
         return
       }
       lastType = type
-      void runDiscovery({ reason: `network type is now ${type}` })
+      networkChanged(`network type is now ${type}`)
     })
   }
 

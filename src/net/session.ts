@@ -304,18 +304,30 @@ export async function attachPeer(link: PeerLink, hello: HelloMessage, flags: Att
   return peer
 }
 
-/** Same-network introduction: both sides say hello straight away. */
-export async function introduceDiscovery(link: PeerLink): Promise<void> {
-  await link.ready
-  L.debug('channel open, exchanging hello', { ice: link.pc.iceConnectionState, sctp: link.pc.sctp?.state })
+/**
+ * Swap hellos on a fresh link. Ours is repeated until theirs arrives and then sent once more: the other
+ * side stops repeating the moment it hears us, so if its first hello was dropped before our channel
+ * existed we would never hear it. Their hello arriving proves their channel exists, so the last copy of
+ * ours lands and they are not left waiting until their timeout closes the connection.
+ */
+export async function exchangeHello(link: PeerLink, timeoutMs: number): Promise<HelloMessage> {
   // The first handler attached receives anything that arrived early, so the waiter must be first.
-  const theirs = waitForControl(link, PEER_TIMEOUT_MS, (m) => {
+  const theirs = waitForControl(link, timeoutMs, (m) => {
     if (isHello(m)) L.debug(`rx hello from ${String(m.name)}`)
     else L.debug(`rx ${m.type} before hello`)
     return isHello(m)
   })
   sendUntil(link, helloMessage(), theirs)
   const hello = (await theirs) as HelloMessage
+  link.sendControl(helloMessage())
+  return hello
+}
+
+/** Same-network introduction: both sides say hello straight away. */
+export async function introduceDiscovery(link: PeerLink): Promise<void> {
+  await link.ready
+  L.debug('channel open, exchanging hello', { ice: link.pc.iceConnectionState, sctp: link.pc.sctp?.state })
+  const hello = await exchangeHello(link, PEER_TIMEOUT_MS)
   await attachPeer(link, hello, { paired: false, passwordVerified: false })
 }
 
